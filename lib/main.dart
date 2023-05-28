@@ -414,7 +414,7 @@ class _loginPageState extends State<loginPage> {
                       backgroundColor: Colors.teal[100], // Set the background color
                     ),
                     onPressed: () {
-                      //getting started logic (redirect to login page)
+                      //getting started logic (redirect to lo.gin page)
                     },
                     child: Text(
                       'Login',
