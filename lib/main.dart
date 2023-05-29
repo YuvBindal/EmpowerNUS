@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 //login page 3 sections: getting started, sign up , register.
 void main() {
   runApp(MaterialApp(
-      home: loginPage(),
+      home: getStarted(),
     ),
   );
 }
@@ -64,7 +64,9 @@ class _getStartedState extends State<getStarted> {
                     backgroundColor: Colors.teal[100], // Set the background color
                   ),
                   onPressed: () {
-                    //getting started logic (redirect to login page)
+                    
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>registerPage()));
+
                   },
                   child: Text(
                       'Get Started',
@@ -185,6 +187,8 @@ class _registerPageState extends State<registerPage> {
                   color: Colors.white,
                 ),
                 child: TextField(
+                  obscureText: true,
+                  maxLength: 12,
                   decoration: InputDecoration(
                     hintText: 'Enter password',
                     border: OutlineInputBorder(
@@ -209,6 +213,8 @@ class _registerPageState extends State<registerPage> {
                   color: Colors.white,
                 ),
                 child: TextField(
+                  obscureText: true,
+                  maxLength: 12,
                   decoration: InputDecoration(
                     hintText: 'Confirm password',
                     border: OutlineInputBorder(
@@ -269,6 +275,8 @@ class _registerPageState extends State<registerPage> {
                     ),
                     TextButton(
                         onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>loginPage()));
+
 
                           //sign up logic goes here
                         },
@@ -366,6 +374,8 @@ class _loginPageState extends State<loginPage> {
                   color: Colors.white,
                 ),
                 child: TextField(
+                  obscureText: true,
+                  maxLength: 12,
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
                     border: OutlineInputBorder(
@@ -448,6 +458,7 @@ class _loginPageState extends State<loginPage> {
                       ),
                       TextButton(
                         onPressed: () {
+                           Navigator.of(context).push(MaterialPageRoute(builder: (context)=>registerPage()));
 
                           //sign up logic goes here
                         },
