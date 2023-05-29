@@ -14,7 +14,7 @@ This application is a simple yet powerful tool that aims to make university camp
 
 - **Solidity:** Solidity is a programming language specifically designed for writing smart contracts on the Ethereum blockchain. It is a statically-typed language that enables developers to define the behavior and logic of smart contracts, which are self-executing agreements with predefined rules. Solidity allows developers to create decentralized applications (DApps) and implement complex business logic within the Ethereum ecosystem.
 
--- **Python/Tensorflow/OpenCV:** Python is a versatile and powerful programming language widely used in the field of artificial intelligence and computer vision. With its simplicity and readability, Python provides a solid foundation for developing applications that leverage advanced algorithms and data processing capabilities. It offers a vast ecosystem of libraries and frameworks like Tensorflow and OpenCV, making it an ideal choice for building AI-powered solutions.
+- **Python/Tensorflow/OpenCV:** Python is a versatile and powerful programming language widely used in the field of artificial intelligence and computer vision. With its simplicity and readability, Python provides a solid foundation for developing applications that leverage advanced algorithms and data processing capabilities. It offers a vast ecosystem of libraries and frameworks like Tensorflow and OpenCV, making it an ideal choice for building AI-powered solutions.
 
 ## Features
 
