@@ -62,15 +62,15 @@ PS: The structure described here is visualised further in our Entity Relation Di
 
 ## Planning Diagrams
 
-Architecture Diagram: https://drive.google.com/file/d/1djkRIT1R9GQVBvEySOhXF6KxPdcfer_D/view?usp=sharing
-Class Diagram: https://drive.google.com/file/d/1djkRIT1R9GQVBvEySOhXF6KxPdcfer_D/view?usp=sharing
-Entity Relation Diagram: https://drive.google.com/file/d/179XJrIKGFrrp47DK84rDclctYUwO22yc/view?usp=sharing
+- Architecture Diagram: https://drive.google.com/file/d/1djkRIT1R9GQVBvEySOhXF6KxPdcfer_D/view?usp=sharing
+- Class Diagram: https://drive.google.com/file/d/1djkRIT1R9GQVBvEySOhXF6KxPdcfer_D/view?usp=sharing
+- Entity Relation Diagram: https://drive.google.com/file/d/179XJrIKGFrrp47DK84rDclctYUwO22yc/view?usp=sharing
 
 
 ## Designs (UI/UX)
 
-!~[App Mockup Design](https://github.com/YuvBindal/EmpowerNUS/blob/main/App%20Mockup%20Design.png)
-https://drive.google.com/file/d/1mjvpThLszqG0kx1BdfQPGnt_emhp1kLO/view?usp=sharing
+- !~[App Mockup Design](https://github.com/YuvBindal/EmpowerNUS/blob/main/App%20Mockup%20Design.png)
+- https://drive.google.com/file/d/1mjvpThLszqG0kx1BdfQPGnt_emhp1kLO/view?usp=sharing
 
 The designs above showcase the UI/UX visuals for the EmpowerNUS app. We have included these to elaborate on our planning process during coding the UI/UX for this app which can be testing by referring to the "USER TESTING" section. The designs show the UI/UX for the:
 - Getting Started Page.
