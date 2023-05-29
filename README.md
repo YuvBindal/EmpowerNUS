@@ -12,6 +12,10 @@ This application is a simple yet powerful tool that aims to make university camp
   
 - **Cloud Firestore:** Cloud Firestore is a flexible, scalable NoSQL cloud database to store and sync data for client- and server-side development.
 
+- **Solidity:** Solidity is a programming language specifically designed for writing smart contracts on the Ethereum blockchain. It is a statically-typed language that enables developers to define the behavior and logic of smart contracts, which are self-executing agreements with predefined rules. Solidity allows developers to create decentralized applications (DApps) and implement complex business logic within the Ethereum ecosystem.
+
+-- **Python/Tensorflow/OpenCV:** Python is a versatile and powerful programming language widely used in the field of artificial intelligence and computer vision. With its simplicity and readability, Python provides a solid foundation for developing applications that leverage advanced algorithms and data processing capabilities. It offers a vast ecosystem of libraries and frameworks like Tensorflow and OpenCV, making it an ideal choice for building AI-powered solutions.
+
 ## Features
 
 ### Existing Features
@@ -24,8 +28,9 @@ This application is a simple yet powerful tool that aims to make university camp
 
 ### Future Features
 
+-**Object Detection/Deep Computer Vision AI Algorithm**-- Our object detection AI algorithm will help users take pictures of crime scene and label critical information before the evidence passes to the authorities. Moreover, this algorithm will be used when the panic button is activated.
 -**Educational Resources** Users will be able to enjoy our unique courses aimed at raising awareness on crime prevention and self defense with an element of gamification.
-- **Crime Reporting:** Users can deploy crime incidents reports directly through the app. This information can be shared with the authorities to ensure proper actions are taken.
+- **Blockchain/Smart Contracts Crime Reporting:** Users can deploy crime incidents reports directly through the app. This information can be shared with the authorities to ensure proper actions are taken. We will deploy these reports in the form of smart contracts using solidity and the ethereum blockchain to ensure user privacy and data immutability.
 - **Safety Resources:** Users can access information and resources on how to prevent crimes, ensuring they are well informed.
 - **User Connection:** The app will allow users to share experiences and connect with other users, creating a sense of community and collective security.
 - **Data Sharing with Authorities:** Users will be able to share crucial data with authorities, ensuring real-time communication during emergency situations.
@@ -77,6 +82,17 @@ The designs above showcase the UI/UX visuals for the EmpowerNUS app. We have inc
 
 Note: These designs only illustrate a fraction of our app.
 
+## Relevant Datasets / Plan Changes
+
+Our team has decided to switch the app's focus from Singapore to the Indian subcontinent as we were able to extract relevant datasets for our evidence generating AI algorithm using Kaggle datasets for India. The 2018 article below lists an extensive repository of datasets related to different types of crimes in India which we intend to use in the future for development purposes.
+
+https://data.gov.in/catalog/crime-india-2018
+
+## FIREBASE DATABASE SHOWCASE
+
+The image below shows proof of our firebase database that we will further develop to support a seamless experience for our users in tasks such as logging in, signing up, deploying reports, route finding, and much more!
+
+https://drive.google.com/file/d/1cgi5cscHQMgwBA9JSUwP25O8vPbNNFY4/view?usp=sharing
 
 ## Getting Started
 
@@ -117,6 +133,10 @@ flutter run
 
 Note: UI_Codes stores the classes for our home page, educational resources page, and Reporting system. Meanwhile, Login_Frontend holds the code for the setting up process of the app.
 
+
+## Disclaimer
+
+The backend side of our application is still undergoing debugging and further testing for those reasons we have only made the front end application available to interesting users.
 
 
 
