@@ -29,7 +29,7 @@ This application is a simple yet powerful tool that aims to become a one stop sa
 ### Future Features
 
 - **Object Detection/Deep Computer Vision AI Algorithm** Our object detection AI algorithm will help users take pictures of crime scene and label critical information before the evidence passes to the authorities. Moreover, this algorithm will be used when the panic button is activated.
--**Educational Resources** Users will be able to enjoy our unique courses aimed at raising awareness on crime prevention and self defense with an element of gamification.
+- **Educational Resources** Users will be able to enjoy our unique courses aimed at raising awareness on crime prevention and self defense with an element of gamification.
 - **Blockchain/Smart Contracts Crime Reporting:** Users can deploy crime incidents reports directly through the app. This information can be shared with the authorities to ensure proper actions are taken. We will deploy these reports in the form of smart contracts using solidity and the ethereum blockchain to ensure user privacy and data immutability.
 - **Safety Resources:** Users can access information and resources on how to prevent crimes, ensuring they are well informed.
 - **User Connection:** The app will allow users to share experiences and connect with other users, creating a sense of community and collective security.
