@@ -42,7 +42,7 @@ Remember, when structuring the Firestore database, we should aim for a balance b
 
 ## Designs
 
-![App Mockup Design](master/images/App Mockup Design.png)
+![App Mockup Design](/App Mockup Design.png)
 
 
 ## Getting Started
