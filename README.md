@@ -1,6 +1,6 @@
 # EmpowerNUS
 
-This application is a simple yet powerful tool that aims to make university campuses safer. Developed in Flutter and using Firebase for backend services, this application provides user authentication and a platform for reporting crime incidents, accessing safety resources, connecting with other users, and sharing life-saving data with authorities. 
+This application is a simple yet powerful tool that aims to become a one stop safety shop for our users. Developed in Flutter and using Firebase for backend services, this application provides user authentication and a platform for reporting crime incidents, accessing safety resources, connecting with other users, sharing life-saving data with authorities, safety plans, and much more to help its users feel empowered through safety!
 
 ## Tech Stack
 
