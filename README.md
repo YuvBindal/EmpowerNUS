@@ -1,6 +1,6 @@
 # camerascan
 
-A new Flutter project.
+Development for the AI scanner algorithm and page (ongoing), will merge with UI_Codes Branch later
 
 ## Getting Started
 
