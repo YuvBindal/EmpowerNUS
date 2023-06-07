@@ -452,7 +452,8 @@ class _loginPageState extends State<loginPage> {
               child: Center(
                 child: TextButton(
                   onPressed: () {
-                    //redirect to forgot password page
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => ResetPasswordPage()));
                   },
                   child: Text(
                     'Forgot Password',
@@ -526,5 +527,95 @@ class _loginPageState extends State<loginPage> {
         ),
       ),
     ));
+  }
+}
+
+class ResetPasswordPage extends StatefulWidget {
+  @override
+  _ResetPasswordPageState createState() => _ResetPasswordPageState();
+}
+
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  final _auth = FirebaseAuth.instance;
+  final _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password reset email sent'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error occurred while sending password reset email'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[900],
+      appBar: AppBar(
+        title: Text('Reset Password'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(color: Colors.teal),
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  if (_emailController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please enter an email'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } else {
+                    _resetPassword(_emailController.text);
+                  }
+                },
+                child: Text('Reset Password'),
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.teal, // background
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
