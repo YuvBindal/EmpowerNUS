@@ -4,30 +4,40 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_core/firebase_core.dart';
+import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(MaterialApp(
-    home: scanner(),
+    home: Scanner(),
   ));
 }
 
-class scanner extends StatefulWidget {
+class Scanner extends StatefulWidget {
   @override
-  State<scanner> createState() => _scannerState();
+  State<Scanner> createState() => _ScannerState();
 }
 
-class _scannerState extends State<scanner> {
+class _ScannerState extends State<Scanner> {
   late CameraController controller;
   bool _isCameraInitialized = false;
   bool _isFrontCamera = false;
+  bool _isTakingPicture = false;
+  bool _picStorage = false;
+  final player = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
     initializeCamera();
   }
+
+
+
+
   @override
   void dispose() {
     controller.dispose();
@@ -57,32 +67,71 @@ class _scannerState extends State<scanner> {
   }
 
   Future<void> takePicture() async {
+    if (_isTakingPicture) return;
+
+    setState(() {
+      _isTakingPicture = true;
+      _picStorage = true;
+    });
+
+    player.play(AssetSource('assets/audios/camera-shutter-18399.mp3'));
+    await Future.delayed(Duration(milliseconds: 500)); //add a little effect
+
     try {
       final XFile picture = await controller.takePicture();
       print('Picture saved at: ${picture.path}');
+      uploadImageToFirebase(picture.path); // Call the method to upload the image
     } catch (e) {
       print('Error taking picture: $e');
+    }  finally {
+      setState(() {
+        _isTakingPicture = false;
+      });
     }
   }
 
+  Future<void> uploadImageToFirebase(String imagePath) async {
+    try {
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final destination = 'images/$fileName.png';
 
+      final firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance.ref(destination);
+      final firebase_storage.UploadTask uploadTask = ref.putFile(File(imagePath));
 
+      final firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
+      final String downloadURL = await taskSnapshot.ref.getDownloadURL();
+
+      print('Image uploaded. Download URL: $downloadURL');
+    } catch (e) {
+      print('Error uploading image to Firebase Storage: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     double ScreenWidth = MediaQuery.of(context).size.width;
     double ScreenHeight = MediaQuery.of(context).size.height;
-
+    double ScreenFont = MediaQuery.of(context).textScaleFactor;
     return Scaffold(
       //.93 of the container height
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
+
+
+
             Container(
+
               // camera goes here
               width: ScreenWidth * 1,
               height: ScreenHeight * .70,
-              color: Colors.grey[200],
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red, width: _isTakingPicture ?
+                5.0 :
+                0.0),
+
+              ),
+
               child: _isCameraInitialized
                   ? AspectRatio(
                 aspectRatio: controller.value.aspectRatio,
@@ -95,8 +144,39 @@ class _scannerState extends State<scanner> {
               //picture storage goes here
               width: ScreenWidth * 1,
               height: ScreenHeight * .15,
-              color: Colors.black,
+              color: Colors.grey[800],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  (_picStorage) ?
 
+                      //create a scrollbar with image addition
+                  Text('true'):
+                  //create a placeholder text
+                  Text(
+                      'No Images Found',
+                    style: GoogleFonts.montserrat(
+                      textStyle: TextStyle(
+                        shadows: [
+                          Shadow(
+                            color: Colors.grey,
+                            offset: Offset(2, 2),
+                            blurRadius: 2,
+                          ),
+                        ],
+                        fontSize: ScreenWidth * 0.05* 1.1,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[200],
+                      ),
+
+
+                    ),
+
+
+                  ),
+                ],
+
+              ),
 
             ),
             Container(
@@ -124,9 +204,8 @@ class _scannerState extends State<scanner> {
                         color: null,
                       ),
                       iconSize: ScreenHeight * .04,
-                      )
                     ),
-
+                  ),
                 ],
               ),
             )
