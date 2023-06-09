@@ -480,6 +480,8 @@ class _loginPageState extends State<loginPage> {
                   ),
                   onPressed: () {
                     //getting started logic (redirect to lo.gin page)
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => HomePage()));
                   },
                   child: Text(
                     'Login',
@@ -615,6 +617,107 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: Icon(Icons.menu, color: Colors.blue[600]),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            );
+          },
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: CircleAvatar(
+              backgroundImage: NetworkImage('assets/images/profile-user.png'),
+            ),
+            onPressed: () {
+              // Put the code to execute when the profile button is pressed here
+            },
+          ),
+          SizedBox(width: 10),
+        ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text('Menu',
+                  style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Log out'),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => loginPage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      body: Center(
+        child: GestureDetector(
+          onTap: () {
+            //logic to be put in later
+          },
+          child: Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.blue[100],
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.grey[200],
+        selectedItemColor: Colors.blue[600],
+        unselectedItemColor: Colors.grey[500],
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.adb_rounded),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle_rounded),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.book),
+            label: 'Resources',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Map',
+          ),
+        ],
       ),
     );
   }
