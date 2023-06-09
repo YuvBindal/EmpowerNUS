@@ -35,9 +35,6 @@ class _ScannerState extends State<Scanner> {
     initializeCamera();
   }
 
-
-
-
   @override
   void dispose() {
     controller.dispose();
@@ -49,7 +46,7 @@ class _ScannerState extends State<Scanner> {
     final camera = _isFrontCamera ? cameras.last : cameras.first;
     controller = CameraController(
       camera,
-      ResolutionPreset.medium,
+      ResolutionPreset.high,
     );
     await controller.initialize();
     setState(() {
@@ -83,7 +80,7 @@ class _ScannerState extends State<Scanner> {
       uploadImageToFirebase(picture.path); // Call the method to upload the image
     } catch (e) {
       print('Error taking picture: $e');
-    }  finally {
+    } finally {
       setState(() {
         _isTakingPicture = false;
       });
@@ -95,15 +92,81 @@ class _ScannerState extends State<Scanner> {
       final fileName = DateTime.now().millisecondsSinceEpoch.toString();
       final destination = 'images/$fileName.png';
 
-      final firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance.ref(destination);
-      final firebase_storage.UploadTask uploadTask = ref.putFile(File(imagePath));
+      final firebase_storage.Reference ref =
+      firebase_storage.FirebaseStorage.instance.ref(destination);
+      final firebase_storage.UploadTask uploadTask =
+      ref.putFile(File(imagePath));
 
-      final firebase_storage.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
+      final firebase_storage.TaskSnapshot taskSnapshot =
+      await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
       print('Image uploaded. Download URL: $downloadURL');
     } catch (e) {
       print('Error uploading image to Firebase Storage: $e');
+    }
+  }
+
+  Future<void> uploadVideoToFirebase(String videoPath) async {
+    try {
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final destination = 'videos/$fileName.mp4';
+
+      final firebase_storage.Reference ref =
+      firebase_storage.FirebaseStorage.instance.ref(destination);
+      final firebase_storage.UploadTask uploadTask =
+      ref.putFile(File(videoPath));
+
+      final firebase_storage.TaskSnapshot taskSnapshot =
+      await uploadTask.whenComplete(() {});
+      final String downloadURL = await taskSnapshot.ref.getDownloadURL();
+
+      print('Video uploaded. Download URL: $downloadURL');
+
+    } catch (e) {
+      print('Error uploading video to Firebase Storage: $e');
+    }
+  }
+
+
+
+  void startRecording() async {
+    print('reached starting');
+
+    if (!_isTakingPicture) {
+      try {
+        final Directory extDir = await getTemporaryDirectory();
+        final String dirPath = '${extDir.path}/Videos/flutter_test';
+        await Directory(dirPath).create(recursive: true);
+        final String filePath = '$dirPath/${DateTime.now()}.mp4';
+        await controller.startVideoRecording();
+
+
+      } catch (e) {
+        print('Error starting video recording: $e');
+      } finally {
+        setState(() {
+          _isTakingPicture = true;
+        });
+      }
+    }
+  }
+
+
+  void stopRecording() async {
+    print('reached stopping');
+
+    if (_isTakingPicture) {
+      try {
+        final XFile videoFile = await controller.stopVideoRecording();
+        await uploadVideoToFirebase(videoFile.path);
+      } catch (e) {
+        print('Error stopping video recording: $e');
+      } finally {
+        setState(() {
+          _isTakingPicture = false;
+        });
+      }
     }
   }
 
@@ -117,21 +180,15 @@ class _ScannerState extends State<Scanner> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-
-
-
             Container(
-
               // camera goes here
               width: ScreenWidth * 1,
               height: ScreenHeight * .70,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.red, width: _isTakingPicture ?
-                5.0 :
-                0.0),
-
+                border: Border.all(
+                    color: Colors.red,
+                    width: _isTakingPicture ? 5.0 : 0.0),
               ),
-
               child: _isCameraInitialized
                   ? AspectRatio(
                 aspectRatio: controller.value.aspectRatio,
@@ -139,7 +196,6 @@ class _ScannerState extends State<Scanner> {
               )
                   : Center(child: CircularProgressIndicator()),
             ),
-
             Container(
               //picture storage goes here
               width: ScreenWidth * 1,
@@ -148,13 +204,10 @@ class _ScannerState extends State<Scanner> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  (_picStorage) ?
-
-                      //create a scrollbar with image addition
-                  Text('true'):
-                  //create a placeholder text
-                  Text(
-                      'No Images Found',
+                  (_picStorage)
+                      ? Text('true')
+                      : Text(
+                    'No Images Found',
                     style: GoogleFonts.montserrat(
                       textStyle: TextStyle(
                         shadows: [
@@ -164,20 +217,14 @@ class _ScannerState extends State<Scanner> {
                             blurRadius: 2,
                           ),
                         ],
-                        fontSize: ScreenWidth * 0.05* 1.1,
+                        fontSize: ScreenWidth * 0.05 * 1.1,
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[200],
                       ),
-
-
                     ),
-
-
                   ),
                 ],
-
               ),
-
             ),
             Container(
               width: ScreenWidth * 1,
@@ -186,6 +233,16 @@ class _ScannerState extends State<Scanner> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
+                  Expanded(
+                    child: IconButton(
+                      onPressed: (!_isTakingPicture) ? startRecording : stopRecording,
+                      icon: ImageIcon(
+                        AssetImage('assets/images/Icon_Record.png'),
+                        color: null,
+                      ),
+                      iconSize: ScreenHeight * .1,
+                    ),
+                  ),
                   Expanded(
                     child: IconButton(
                       onPressed: takePicture,
