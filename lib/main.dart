@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -878,6 +881,8 @@ class _ReportPageState extends State<ReportPage> {
   String? selectedItem = 'Assault';
   File? _selectedFile;
   final String siteKey = '6Lf2XT0mAAAAANdtrwTe9ugodykvwUmuxp9cNshh';
+  final TextEditingController _descriptionController =
+      TextEditingController(); // To control the description TextField
 
   void _selectFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -886,6 +891,43 @@ class _ReportPageState extends State<ReportPage> {
         _selectedFile = File(result.files.single.path!);
       });
     }
+  }
+
+  Future<String?> _uploadFile(File file) async {
+    try {
+      // Generate a unique ID for the file
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Create a reference to the file location
+      Reference reference = FirebaseStorage.instance.ref().child(fileName);
+
+      // Upload the file
+      UploadTask uploadTask = reference.putFile(file);
+
+      // Wait until the file is uploaded
+      TaskSnapshot taskSnapshot = await uploadTask;
+
+      // Check if the upload is successful
+      if (taskSnapshot.state == TaskState.success) {
+        // Retrieve the download url
+        String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+        return downloadUrl;
+      } else {
+        print('Upload failed: ${taskSnapshot.state}');
+        return null;
+      }
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
+  Future<void> _submitReport(String? fileUrl) async {
+    await FirebaseFirestore.instance.collection('reports').add({
+      'reportType': selectedItem,
+      'description': _descriptionController.text,
+      'fileUrl': fileUrl,
+    });
   }
 
   void _showCaptchaDialog(BuildContext context) {
@@ -1072,7 +1114,7 @@ class _ReportPageState extends State<ReportPage> {
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: ScreenHeight * .01),
+              // other widgets...
               InkWell(
                 onTap: _selectFile,
                 child: Image.asset(
@@ -1092,13 +1134,20 @@ class _ReportPageState extends State<ReportPage> {
                     child: Text('Verify CAPTCHA'),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Perform submit logic (store to backend);
+                    onPressed: () async {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (BuildContext context) => HomePage()),
                       );
+                      if (_selectedFile != null) {
+                        String? fileUrl = await _uploadFile(_selectedFile!);
+                        if (fileUrl != null) {
+                          await _submitReport(fileUrl);
+                        } else {
+                          // Error uploading the file
+                        }
+                      }
                     },
                     child: Text('Deploy Report'),
                     style: ButtonStyle(
