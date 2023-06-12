@@ -296,7 +296,7 @@ class _registerPageState extends State<registerPage> {
                           );
                           if (userCredential.user != null) {
                             Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => loginPage()));
+                                builder: (context) => LoginPage()));
                           }
                         } on FirebaseAuthException catch (e) {
                           if (e.code == 'weak-password') {
@@ -338,7 +338,7 @@ class _registerPageState extends State<registerPage> {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => loginPage()));
+                            builder: (context) => LoginPage()));
                       },
                       child: Text('Sign in'),
                     ),
@@ -353,14 +353,48 @@ class _registerPageState extends State<registerPage> {
   }
 }
 
-class loginPage extends StatefulWidget {
-  const loginPage({Key? key}) : super(key: key);
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
-  State<loginPage> createState() => _loginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _loginPageState extends State<loginPage> {
+class _LoginPageState extends State<LoginPage> {
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      // Handle the error in your app here.
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -400,7 +434,6 @@ class _loginPageState extends State<loginPage> {
                 child: Image.asset('assets/images/Icon_LoginImage.png'),
               ),
             ),
-            //.6
             Container(
               width: MediaQuery.of(context).size.width * 0.9,
               height: MediaQuery.of(context).size.height * 0.1,
@@ -408,6 +441,7 @@ class _loginPageState extends State<loginPage> {
                 color: Colors.white,
               ),
               child: TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'Enter your email',
                   border: OutlineInputBorder(
@@ -432,6 +466,7 @@ class _loginPageState extends State<loginPage> {
                 color: Colors.white,
               ),
               child: TextField(
+                controller: _passwordController,
                 obscureText: true,
                 maxLength: 12,
                 decoration: InputDecoration(
@@ -473,7 +508,6 @@ class _loginPageState extends State<loginPage> {
                 ),
               ),
             ),
-            //.85
             Center(
               child: Container(
                 width: screenWidth * .8,
@@ -483,11 +517,7 @@ class _loginPageState extends State<loginPage> {
                     backgroundColor:
                         Colors.teal[100], // Set the background color
                   ),
-                  onPressed: () {
-                    //getting started logic (redirect to lo.gin page)
-                    Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => HomePage()));
-                  },
+                  onPressed: _login,
                   child: Text(
                     'Login',
                     style: TextStyle(
@@ -501,7 +531,6 @@ class _loginPageState extends State<loginPage> {
                 ),
               ),
             ),
-            //.93
             Container(
               height: screenHeight * .07,
               child: Center(
@@ -521,8 +550,6 @@ class _loginPageState extends State<loginPage> {
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => registerPage()));
-
-                        //sign up logic goes here
                       },
                       child: Text('Sign up'),
                     ),
@@ -683,7 +710,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext context) => loginPage()),
+                          builder: (BuildContext context) => LoginPage()),
                     );
                   },
                 ),
@@ -814,7 +841,14 @@ class _HomePageState extends State<HomePage> {
                           iconSize: ScreenSize * .1,
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      AccountPage()),
+                            );
+                          },
                           icon: ImageIcon(
                             AssetImage('assets/images/Icon_Network.png'),
                             color: null,
@@ -1476,5 +1510,118 @@ class _education_PageState extends State<education_Page> {
         ],
       ),
     );
+  }
+}
+
+class AccountPage extends StatefulWidget {
+  @override
+  _AccountPageState createState() => _AccountPageState();
+}
+
+class _AccountPageState extends State<AccountPage> {
+  final _auth = FirebaseAuth.instance;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = _auth.currentUser;
+    if (_user != null) {
+      _nameController.text = _user!.displayName ?? '';
+      _emailController.text = _user!.email ?? '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Account Management'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              // Name
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(labelText: 'Name'),
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                },
+              ),
+
+              // Email
+              TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  if (value!.isEmpty || !value.contains('@')) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+
+              // Password
+              TextFormField(
+                controller: _passwordController,
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value!.isEmpty || value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+
+              // Confirm Password
+              TextFormField(
+                controller: _confirmPasswordController,
+                decoration: InputDecoration(labelText: 'Confirm Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+
+              // Save button
+              ElevatedButton(
+                onPressed: _save,
+                child: Text('Save'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _save() async {
+    if (_formKey.currentState!.validate()) {
+      String name = _nameController.text;
+      String email = _emailController.text;
+      String password = _passwordController.text;
+
+      if (_user != null) {
+        _user!.updateDisplayName(name);
+        _user!.updateEmail(email);
+        _user!.updatePassword(password);
+      }
+    }
   }
 }
