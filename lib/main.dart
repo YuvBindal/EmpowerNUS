@@ -663,8 +663,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _panicModeOn = false;
-  String _bearImageUrl =
+  String _defaultBearImageUrl =
       'assets/images/Icon_Alert_Bear.png'; // Default bear image
+  String? _bearImageUrl;
 
   @override
   void initState() {
@@ -686,6 +687,14 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     double ScreenSize = MediaQuery.of(context).size.width;
     double ScreenHeight = MediaQuery.of(context).size.height;
+
+    // Image Provider
+    ImageProvider imageProvider;
+    if (_bearImageUrl != null) {
+      imageProvider = NetworkImage(_bearImageUrl!);
+    } else {
+      imageProvider = AssetImage(_defaultBearImageUrl);
+    }
 
     return ScaffoldMessenger(
       child: Scaffold(
@@ -835,7 +844,7 @@ class _HomePageState extends State<HomePage> {
                   child: GestureDetector(
                     onTap: () {},
                     child: Image(
-                      image: AssetImage(_bearImageUrl),
+                      image: imageProvider,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -1659,20 +1668,15 @@ class _AccountPageState extends State<AccountPage> {
       String downloadUrl =
           await FirebaseStorage.instance.ref(imageLocation).getDownloadURL();
 
-      // After uploading, save the downloadUrl in the user's profile.
-      if (_user != null) {
-        await _user!.updatePhotoURL(downloadUrl);
-        _user = _auth.currentUser; // Refresh the user object.
-      }
+      // After uploading, save the downloadUrl in Shared Preferences.
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('bearImageUrl', downloadUrl);
 
-      setState(() {}); // Force re-build.
+      setState(() {
+        // Force re-build
+      });
     } catch (e) {
       print(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to upload image. Please try again.'),
-        ),
-      );
     }
   }
 
@@ -1683,20 +1687,9 @@ class _AccountPageState extends State<AccountPage> {
       String password = _passwordController.text;
 
       if (_user != null) {
-        try {
-          await _user!.updateDisplayName(name);
-          await _user!.updateEmail(email);
-          await _user!.updatePassword(password);
-          _user = _auth.currentUser; // Refresh the user object.
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Profile Updated'),
-          ));
-        } catch (e) {
-          print(e);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('An error occurred. Please try again later.'),
-          ));
-        }
+        _user!.updateDisplayName(name);
+        _user!.updateEmail(email);
+        _user!.updatePassword(password);
       }
     }
   }
