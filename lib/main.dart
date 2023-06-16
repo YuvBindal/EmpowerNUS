@@ -7,6 +7,8 @@ import 'dart:io';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -661,6 +663,24 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _panicModeOn = false;
+  String _bearImageUrl =
+      'assets/images/Icon_Alert_Bear.png'; // Default bear image
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageUrl();
+  }
+
+  void _loadImageUrl() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? bearImageUrl = prefs.getString('bearImageUrl');
+    if (bearImageUrl != null) {
+      setState(() {
+        _bearImageUrl = bearImageUrl;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -815,7 +835,7 @@ class _HomePageState extends State<HomePage> {
                   child: GestureDetector(
                     onTap: () {},
                     child: Image(
-                      image: AssetImage('assets/images/Icon_Alert_Bear.png'),
+                      image: AssetImage(_bearImageUrl),
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -1526,6 +1546,7 @@ class _AccountPageState extends State<AccountPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   User? _user;
+  File? _image;
 
   @override
   void initState() {
@@ -1542,6 +1563,12 @@ class _AccountPageState extends State<AccountPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Account Management'),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.image),
+            onPressed: _pickImage,
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -1611,6 +1638,44 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  void _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      _image = File(image.path);
+      await _uploadImageToFirebase(_image!);
+    }
+  }
+
+  Future<void> _uploadImageToFirebase(File image) async {
+    try {
+      // Make random image name.
+      int randomNumber = DateTime.now().millisecondsSinceEpoch;
+      String imageLocation = 'images/image$randomNumber.jpg';
+
+      // Upload image to firebase.
+      await FirebaseStorage.instance.ref(imageLocation).putFile(image);
+      String downloadUrl =
+          await FirebaseStorage.instance.ref(imageLocation).getDownloadURL();
+
+      // After uploading, save the downloadUrl in the user's profile.
+      if (_user != null) {
+        await _user!.updatePhotoURL(downloadUrl);
+        _user = _auth.currentUser; // Refresh the user object.
+      }
+
+      setState(() {}); // Force re-build.
+    } catch (e) {
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to upload image. Please try again.'),
+        ),
+      );
+    }
+  }
+
   void _save() async {
     if (_formKey.currentState!.validate()) {
       String name = _nameController.text;
@@ -1618,9 +1683,20 @@ class _AccountPageState extends State<AccountPage> {
       String password = _passwordController.text;
 
       if (_user != null) {
-        _user!.updateDisplayName(name);
-        _user!.updateEmail(email);
-        _user!.updatePassword(password);
+        try {
+          await _user!.updateDisplayName(name);
+          await _user!.updateEmail(email);
+          await _user!.updatePassword(password);
+          _user = _auth.currentUser; // Refresh the user object.
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Profile Updated'),
+          ));
+        } catch (e) {
+          print(e);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('An error occurred. Please try again later.'),
+          ));
+        }
       }
     }
   }
