@@ -843,9 +843,13 @@ class _HomePageState extends State<HomePage> {
                   padding: EdgeInsets.all(ScreenHeight * .01),
                   child: GestureDetector(
                     onTap: () {},
-                    child: Image(
-                      image: imageProvider,
-                      fit: BoxFit.contain,
+                    child: ClipOval(
+                      child: Image(
+                        image: imageProvider,
+                        width: 750, // or any size you want
+                        height: 600, // or any size you want
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
