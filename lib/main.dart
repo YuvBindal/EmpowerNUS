@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,7 +15,6 @@ import 'dart:async';
 import 'chatMessage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -25,7 +26,7 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: ChatBot(),
+    home: angelList(),
   ));
 }
 
@@ -90,7 +91,8 @@ class _ScannerState extends State<Scanner> {
     try {
       final XFile picture = await controller.takePicture();
       print('Picture saved at: ${picture.path}');
-      uploadImageToFirebase(picture.path); // Call the method to upload the image
+      uploadImageToFirebase(
+          picture.path); // Call the method to upload the image
     } catch (e) {
       print('Error taking picture: $e');
     } finally {
@@ -106,12 +108,12 @@ class _ScannerState extends State<Scanner> {
       final destination = 'images/$fileName.png';
 
       final firebase_storage.Reference ref =
-      firebase_storage.FirebaseStorage.instance.ref(destination);
+          firebase_storage.FirebaseStorage.instance.ref(destination);
       final firebase_storage.UploadTask uploadTask =
-      ref.putFile(File(imagePath));
+          ref.putFile(File(imagePath));
 
       final firebase_storage.TaskSnapshot taskSnapshot =
-      await uploadTask.whenComplete(() {});
+          await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
       print('Image uploaded. Download URL: $downloadURL');
@@ -126,22 +128,19 @@ class _ScannerState extends State<Scanner> {
       final destination = 'videos/$fileName.mp4';
 
       final firebase_storage.Reference ref =
-      firebase_storage.FirebaseStorage.instance.ref(destination);
+          firebase_storage.FirebaseStorage.instance.ref(destination);
       final firebase_storage.UploadTask uploadTask =
-      ref.putFile(File(videoPath));
+          ref.putFile(File(videoPath));
 
       final firebase_storage.TaskSnapshot taskSnapshot =
-      await uploadTask.whenComplete(() {});
+          await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
       print('Video uploaded. Download URL: $downloadURL');
-
     } catch (e) {
       print('Error uploading video to Firebase Storage: $e');
     }
   }
-
-
 
   void startRecording() async {
     print('reached starting');
@@ -153,8 +152,6 @@ class _ScannerState extends State<Scanner> {
         await Directory(dirPath).create(recursive: true);
         final String filePath = '$dirPath/${DateTime.now()}.mp4';
         await controller.startVideoRecording();
-
-
       } catch (e) {
         print('Error starting video recording: $e');
       } finally {
@@ -164,7 +161,6 @@ class _ScannerState extends State<Scanner> {
       }
     }
   }
-
 
   void stopRecording() async {
     print('reached stopping');
@@ -199,14 +195,13 @@ class _ScannerState extends State<Scanner> {
               height: ScreenHeight * .70,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: Colors.red,
-                    width: _isTakingPicture ? 5.0 : 0.0),
+                    color: Colors.red, width: _isTakingPicture ? 5.0 : 0.0),
               ),
               child: _isCameraInitialized
                   ? AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: CameraPreview(controller),
-              )
+                      aspectRatio: controller.value.aspectRatio,
+                      child: CameraPreview(controller),
+                    )
                   : Center(child: CircularProgressIndicator()),
             ),
             Container(
@@ -220,22 +215,22 @@ class _ScannerState extends State<Scanner> {
                   (_picStorage)
                       ? Text('true')
                       : Text(
-                    'No Images Found',
-                    style: GoogleFonts.montserrat(
-                      textStyle: TextStyle(
-                        shadows: [
-                          Shadow(
-                            color: Colors.grey,
-                            offset: Offset(2, 2),
-                            blurRadius: 2,
+                          'No Images Found',
+                          style: GoogleFonts.montserrat(
+                            textStyle: TextStyle(
+                              shadows: [
+                                Shadow(
+                                  color: Colors.grey,
+                                  offset: Offset(2, 2),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                              fontSize: ScreenWidth * 0.05 * 1.1,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[200],
+                            ),
                           ),
-                        ],
-                        fontSize: ScreenWidth * 0.05 * 1.1,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[200],
-                      ),
-                    ),
-                  ),
+                        ),
                 ],
               ),
             ),
@@ -248,7 +243,8 @@ class _ScannerState extends State<Scanner> {
                 children: <Widget>[
                   Expanded(
                     child: IconButton(
-                      onPressed: (!_isTakingPicture) ? startRecording : stopRecording,
+                      onPressed:
+                          (!_isTakingPicture) ? startRecording : stopRecording,
                       icon: ImageIcon(
                         AssetImage('assets/images/Icon_Record.png'),
                         color: null,
@@ -356,15 +352,14 @@ class ChatBot extends StatefulWidget {
 
 class _ChatBotState extends State<ChatBot> {
   final TextEditingController _controller = TextEditingController();
-  final List<ChatMessage> _messages  = [];
+  final List<ChatMessage> _messages = [];
   late OpenAI? chatGPT;
-
 
   @override
   void initState() {
     chatGPT = OpenAI.instance.build(
-      token: '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',
-      baseOption: HttpSetup(receiveTimeout: Duration(seconds:60000)));
+        token: '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',
+        baseOption: HttpSetup(receiveTimeout: Duration(seconds: 60000)));
     super.initState();
   }
 
@@ -378,9 +373,7 @@ class _ChatBotState extends State<ChatBot> {
     if (_controller.text.isEmpty) return;
     ChatMessage _message = ChatMessage(
         text: _controller.text,
-        sender: "user"
-    ); // need to fetch username and replace here
-
+        sender: "user"); // need to fetch username and replace here
 
     setState(() {
       _messages.insert(0, _message);
@@ -392,12 +385,10 @@ class _ChatBotState extends State<ChatBot> {
     final request = CompleteText(
       model: kTextDavinci3,
       prompt: _message.text,
-
     );
     final response = await chatGPT!.onCompletion(request: request);
     Vx.log(response!.choices[0].text);
     insertNewData(response.choices[0].text);
-
   }
 
   void insertNewData(String response) {
@@ -417,7 +408,8 @@ class _ChatBotState extends State<ChatBot> {
           child: TextField(
             controller: _controller,
             onSubmitted: (value) => _sendMessage(),
-            decoration: InputDecoration.collapsed(hintText: "Got any questions?"),
+            decoration:
+                InputDecoration.collapsed(hintText: "Got any questions?"),
           ),
         ),
         IconButton(
@@ -435,33 +427,28 @@ class _ChatBotState extends State<ChatBot> {
     double ScreenFont = MediaQuery.of(context).textScaleFactor;
 
     return Scaffold(
-
-      appBar: AppBar(title:
-
-        Center(
-          child: Text(
-              "Crime Fighting GPT",
-            style: GoogleFonts.openSans(),
-          ),
-        )
-      ),
+      appBar: AppBar(
+          title: Center(
+        child: Text(
+          "Crime Fighting GPT",
+          style: GoogleFonts.openSans(),
+        ),
+      )),
 
       body: SafeArea(
         child: Column(
-          children:  [
-            Flexible (
+          children: [
+            Flexible(
               child: ListView.builder(
                 reverse: true,
                 padding: Vx.m8,
                 itemCount: _messages.length,
                 scrollDirection: Axis.vertical,
-                itemBuilder:(context, index) {
+                itemBuilder: (context, index) {
                   return _messages[index];
                 },
               ),
-
             ),
-
             Container(
               decoration: BoxDecoration(
                 color: context.cardColor,
@@ -534,6 +521,322 @@ class _ChatBotState extends State<ChatBot> {
         ),
       ],
     );
+  }
+}
 
+class angelList extends StatefulWidget {
+  const angelList({super.key});
+
+  @override
+  State<angelList> createState() => _angelListState();
+}
+
+class _angelListState extends State<angelList> {
+  @override
+  Widget build(BuildContext context) {
+    double ScreenHeight = MediaQuery.of(context).size.height;
+    double ScreenWidth = MediaQuery.of(context).size.width;
+    double ScreenFont = MediaQuery.of(context).textScaleFactor;
+
+    return Scaffold(
+      body: Container(
+        child: Stack(
+          children: [
+            FractionallySizedBox(
+              widthFactor: 1.0,
+              heightFactor: 1.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Image_Background.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget> [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(0, ScreenHeight *.05, 0, ScreenHeight *.05),
+                      child: Container(
+                        height: ScreenHeight * .06,
+                        width: ScreenWidth * .42,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                              BorderRadius.circular(ScreenWidth * .02),
+                            ),
+                            backgroundColor: Colors.lightGreen[300],
+                          ),
+                          child: Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                            children: [
+                              Image(
+                                width: ScreenWidth * .05,
+                                height: ScreenHeight * .04,
+                                image: AssetImage(
+                                    'assets/images/icon_contact.png'),
+                              ),
+                              Text(
+                                'Add Contact',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: ScreenWidth * .035,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(0, ScreenHeight *.05, 0, ScreenHeight *.05),
+                      child: Container(
+                        height: ScreenHeight * .06,
+                        width: ScreenWidth * .46,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                              BorderRadius.circular(ScreenWidth * .02),
+                            ),
+                            backgroundColor: Colors.red[300],
+                          ),
+                          child: Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                            children: [
+                              Image(
+                                width: ScreenWidth * .05,
+                                height: ScreenHeight * .04,
+                                image: AssetImage(
+                                    'assets/images/icon_contact.png'),
+                              ),
+                              Text(
+                                'Delete Contact',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: ScreenWidth * .035,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+
+                  ],
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      width: ScreenWidth,
+                      color: Colors.white,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          //angel list contacts go in here
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(0, ScreenWidth*.02, 0, ScreenWidth*.02),
+                            child: Center(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(0.05 * ScreenWidth),
+                                  color: Colors.amber,
+                                ),
+                                width: ScreenWidth * 0.9,
+                                height: ScreenHeight * 0.25,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    //load contact image here
+                                    Image(
+                                      image: AssetImage('assets/images/Icon_Avatar.png'),
+                                    ),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: <Widget>[
+                                        SizedBox(height: ScreenHeight * .02),
+                                        Text(
+                                          'Contact Name',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: ScreenWidth * .06,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: <Widget>[
+                                            Image(
+                                              width: ScreenWidth * .07,
+                                              height: ScreenHeight * .05,
+                                              color: null,
+                                              image: AssetImage(
+                                                  'assets/images/icon_location.png'),
+                                            ),
+                                            Text(
+                                              'City, State, Country',
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: ScreenWidth * .035,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(ScreenWidth * .02),
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Image(
+                                                width: ScreenWidth * .05,
+                                                height: ScreenHeight * .02,
+                                                image: AssetImage(
+                                                    'assets/images/icon_fav.png'),
+                                              ),
+                                              Text(
+                                                'Favourite',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: ScreenWidth * .035,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(ScreenWidth * .02),
+                                            ),
+                                            backgroundColor: Colors.blueAccent,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Image(
+                                                width: ScreenWidth * .06,
+                                                height: ScreenHeight * .03,
+                                                image: AssetImage(
+                                                    'assets/images/icon_contact.png'),
+                                              ),
+                                              Text(
+                                                'Update Info',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: ScreenWidth * .035,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Add more items as needed
+
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+
+      //.93 HEIGHT REMAINS
+      persistentFooterButtons: [
+        Container(
+          height: ScreenHeight * .07,
+          child: Flex(
+            direction: Axis.horizontal,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Expanded(
+                child: IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenWidth * .1,
+                ),
+              ),
+              Expanded(
+                child: IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenWidth * .1,
+                ),
+              ),
+              Expanded(
+                child: IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenWidth * .1,
+                ),
+              ),
+              Expanded(
+                child: IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenWidth * .1,
+                ),
+              ),
+              Expanded(
+                child: IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenWidth * .1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
