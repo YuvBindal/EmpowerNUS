@@ -9,7 +9,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'chatbot.dart';
+import 'Camera_Scanner.dart';
+import 'angelList.dart';
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
 void main() async {
@@ -733,6 +735,17 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
                 ListTile(
+                  title: Text('Angel List'),
+                  onTap: () {
+                    // TODO: Handle item 1 press
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => angelList()),
+                    );
+                  },
+                ),
+                ListTile(
                   leading: Icon(Icons.logout),
                   title: Text('Log out'),
                   onTap: () {
@@ -774,7 +787,14 @@ class _HomePageState extends State<HomePage> {
                       );
                     }),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      Scanner()),
+                            );
+                      },
                       icon: ImageIcon(
                         AssetImage('assets/images/Icon_Camera.png'),
                         size: ScreenHeight * .05,
@@ -866,7 +886,14 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      ChatBot()),
+                            );
+                          },
                           icon: ImageIcon(
                             AssetImage('assets/images/Icon_Chat.png'),
                             color: null,
@@ -1484,7 +1511,14 @@ class _education_PageState extends State<education_Page> {
             children: [
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      ChatBot()),
+                            );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Chat.png'),
                     color: null,
@@ -1494,7 +1528,14 @@ class _education_PageState extends State<education_Page> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      AccountPage()),
+                            );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Network.png'),
                     color: null,
@@ -1520,7 +1561,14 @@ class _education_PageState extends State<education_Page> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      education_Page()),
+                            );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Read.png'),
                     color: null,
