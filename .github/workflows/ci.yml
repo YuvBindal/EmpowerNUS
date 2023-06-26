@@ -1,0 +1,35 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - Compiled_App
+
+jobs:
+  build_and_test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '2.x' # Replace with your desired Flutter version
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS
+        run: flutter build ios
+
+      - name: Build Android
+        run: flutter build apk
+
+      - name: Run iOS tests
+        run: flutter test test_driver/app.dart --flavor ios
+
+      - name: Run Android tests
+        run: flutter test test_driver/app.dart --flavor android
+
