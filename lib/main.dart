@@ -722,6 +722,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 ListTile(
+                  leading: Icon(Icons.add_alert),
                   title: Text('Deploy Report'),
                   onTap: () {
                     // TODO: Handle item 1 press
@@ -740,6 +741,18 @@ class _HomePageState extends State<HomePage> {
                       context,
                       MaterialPageRoute(
                           builder: (BuildContext context) => LoginPage()),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.manage_accounts),
+                  title: Text('Manage Account'),
+                  onTap: () {
+                    // TODO: Handle item 1 press
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => AccountPage()),
                     );
                   },
                 ),
@@ -782,7 +795,13 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext context) => AccountPage()),
+                        );
+                      },
                       icon: ImageIcon(
                         AssetImage('assets/images/Icon_Avatar.png'),
                         color: null,
@@ -874,14 +893,7 @@ class _HomePageState extends State<HomePage> {
                           iconSize: ScreenSize * .1,
                         ),
                         IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (BuildContext context) =>
-                                      AccountPage()),
-                            );
-                          },
+                          onPressed: () {},
                           icon: ImageIcon(
                             AssetImage('assets/images/Icon_Network.png'),
                             color: null,
@@ -1576,12 +1588,6 @@ class _AccountPageState extends State<AccountPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Account Management'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.image),
-            onPressed: _pickImage,
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
@@ -1637,6 +1643,12 @@ class _AccountPageState extends State<AccountPage> {
                   }
                   return null;
                 },
+              ),
+
+              // Image Button
+              ElevatedButton(
+                onPressed: _pickImage,
+                child: Text('Change Panic Button Image'),
               ),
 
               // Save button
