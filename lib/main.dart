@@ -1585,78 +1585,211 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   Widget build(BuildContext context) {
+    double screenSize = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Account Management'),
+        title: Text(
+          'Account Management',
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.teal,
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            children: <Widget>[
-              // Name
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: 'Name'),
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-              ),
-
-              // Email
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value!.isEmpty || !value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-
-              // Password
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value!.isEmpty || value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-              ),
-
-              // Confirm Password
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Confirm Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value != _passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
-
-              // Image Button
-              ElevatedButton(
-                onPressed: _pickImage,
-                child: Text('Change Panic Button Image'),
-              ),
-
-              // Save button
-              ElevatedButton(
-                onPressed: _save,
-                child: Text('Save'),
-              ),
-            ],
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              children: <Widget>[
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: MediaQuery.of(context).textScaleFactor * 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: MediaQuery.of(context).textScaleFactor,
+                    ),
+                    textAlign: TextAlign.justify,
+                    cursorColor: Colors.black38,
+                    maxLines: 1,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your email',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: MediaQuery.of(context).textScaleFactor * 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: MediaQuery.of(context).textScaleFactor,
+                    ),
+                    textAlign: TextAlign.justify,
+                    cursorColor: Colors.black38,
+                    maxLines: 1,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Enter password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: MediaQuery.of(context).textScaleFactor * 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: MediaQuery.of(context).textScaleFactor,
+                    ),
+                    textAlign: TextAlign.justify,
+                    cursorColor: Colors.black38,
+                    maxLines: 1,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: _confirmPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Confirm password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: MediaQuery.of(context).textScaleFactor * 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: MediaQuery.of(context).textScaleFactor,
+                    ),
+                    textAlign: TextAlign.justify,
+                    cursorColor: Colors.black38,
+                    maxLines: 1,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _pickImage,
+                  child: Text('Change Panic Button Image'),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.teal),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _save,
+                  child: Text('Save'),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.teal),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+            screenSize * .02, screenHeight * .02, screenSize * .02, 0),
+        child: FractionallySizedBox(
+          widthFactor: 1.2,
+          child: Container(
+            color: Colors.grey[300],
+            height: screenHeight * .08,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: screenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: screenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: screenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: screenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: screenSize * .1,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1675,22 +1808,16 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _uploadImageToFirebase(File image) async {
     try {
-      // Make random image name.
       int randomNumber = DateTime.now().millisecondsSinceEpoch;
       String imageLocation = 'images/image$randomNumber.jpg';
-
-      // Upload image to firebase.
       await FirebaseStorage.instance.ref(imageLocation).putFile(image);
       String downloadUrl =
           await FirebaseStorage.instance.ref(imageLocation).getDownloadURL();
 
-      // After uploading, save the downloadUrl in Shared Preferences.
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('bearImageUrl', downloadUrl);
 
-      setState(() {
-        // Force re-build
-      });
+      setState(() {});
     } catch (e) {
       print(e);
     }
