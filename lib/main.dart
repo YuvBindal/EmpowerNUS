@@ -893,7 +893,14 @@ class _HomePageState extends State<HomePage> {
                           iconSize: ScreenSize * .1,
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      ChatPage()),
+                            );
+                          },
                           icon: ImageIcon(
                             AssetImage('assets/images/Icon_Network.png'),
                             color: null,
@@ -1835,5 +1842,144 @@ class _AccountPageState extends State<AccountPage> {
         _user!.updatePassword(password);
       }
     }
+  }
+}
+
+class ChatPage extends StatefulWidget {
+  const ChatPage({Key? key}) : super(key: key);
+
+  @override
+  _ChatPageState createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  TextEditingController messageController = TextEditingController();
+  ScrollController scrollController = ScrollController();
+
+  Future<void> callback() async {
+    if (messageController.text.length > 0) {
+      await FirebaseFirestore.instance.collection('messages').add({
+        'text': messageController.text,
+        'from': FirebaseAuth.instance.currentUser?.email,
+        'time': FieldValue.serverTimestamp(),
+      });
+      messageController.clear();
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('My Group Chat'),
+      ),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('messages')
+                    .orderBy('time')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return CircularProgressIndicator();
+                  } else {
+                    List<DocumentSnapshot> docs = snapshot.data!.docs;
+                    List<Widget> messages = docs
+                        .map((doc) => Message(
+                              from: doc['from'],
+                              text: doc['text'],
+                              me: FirebaseAuth.instance.currentUser?.email ==
+                                  doc['from'],
+                            ))
+                        .toList();
+
+                    return ListView(
+                      controller: scrollController,
+                      children: <Widget>[
+                        ...messages,
+                      ],
+                    );
+                  }
+                },
+              ),
+            ),
+            Container(
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: TextField(
+                      onSubmitted: (value) => callback(),
+                      decoration: InputDecoration(
+                        hintText: "Enter a Message...",
+                        border: const OutlineInputBorder(),
+                      ),
+                      controller: messageController,
+                    ),
+                  ),
+                  SendButton(
+                    text: "Send",
+                    callback: callback,
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SendButton extends StatelessWidget {
+  final String text;
+  final VoidCallback callback;
+
+  const SendButton({required this.text, required this.callback});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.send),
+      onPressed: callback,
+    );
+  }
+}
+
+class Message extends StatelessWidget {
+  final String from;
+  final String text;
+  final bool me;
+
+  const Message({required this.from, required this.text, required this.me});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+        crossAxisAlignment:
+            me ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(from),
+          Material(
+            color: me ? Colors.teal : Colors.white,
+            borderRadius: BorderRadius.circular(10.0),
+            elevation: 6.0,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+              child: Text(text),
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
