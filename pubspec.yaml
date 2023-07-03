@@ -50,6 +50,10 @@ dependencies:
 
   velocity_x: "^3.6.0"
   flutter_dotenv: "^5.0.2"
+  file_picker: "^5.3.2"
+  shared_preferences: "^2.1.2"
+  image_picker: "^1.0.0"
+
 
 dev_dependencies:
   flutter_test:

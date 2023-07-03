@@ -1,4 +1,3 @@
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -25,7 +24,7 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: angelForm(),
+    home: VerifyIDForm(),
   ));
 }
 
