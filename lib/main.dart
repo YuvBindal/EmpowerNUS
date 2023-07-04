@@ -1513,7 +1513,13 @@ class _education_PageState extends State<education_Page> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => ChatPage()),
+                    );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Network.png'),
                     color: null,
@@ -1874,11 +1880,21 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    double ScreenSize = MediaQuery.of(context).size.width;
+    double ScreenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('My Group Chat'),
+        backgroundColor: Colors.teal,
       ),
-      body: SafeArea(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -1933,6 +1949,80 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
+        child: FractionallySizedBox(
+          widthFactor: 1.2, // Take up the full available width
+          child: Container(
+            color: Colors.grey[300],
+            height: ScreenHeight * .08,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => ChatPage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => HomePage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => education_Page()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
