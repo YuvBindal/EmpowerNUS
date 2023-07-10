@@ -5,7 +5,6 @@ import 'package:path/path.dart' show join;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:velocity_x/velocity_x.dart';
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
@@ -13,6 +12,7 @@ import 'dart:async';
 import 'chatMessage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'angelForm.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -24,7 +24,7 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: VerifyIDForm(),
+    home: angelList(),
   ));
 }
 
@@ -39,7 +39,6 @@ class _ScannerState extends State<Scanner> {
   bool _isFrontCamera = false;
   bool _isTakingPicture = false;
   bool _picStorage = false;
-  final player = AudioPlayer();
 
   @override
   void initState() {
@@ -83,7 +82,6 @@ class _ScannerState extends State<Scanner> {
       _picStorage = true;
     });
 
-    player.play(AssetSource('assets/audios/camera-shutter-18399.mp3'));
     await Future.delayed(Duration(milliseconds: 500)); //add a little effect
 
     try {
@@ -761,7 +759,232 @@ class _angelListState extends State<angelList> {
                           ),
 
                           // Add more items as needed
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(0, ScreenWidth*.02, 0, ScreenWidth*.02),
+                            child: Center(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(0.05 * ScreenWidth),
+                                  color: Colors.amber,
+                                ),
+                                width: ScreenWidth * 0.9,
+                                height: ScreenHeight * 0.25,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    //load contact image here
+                                    Image(
+                                      image: AssetImage('assets/images/Icon_Avatar.png'),
+                                    ),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: <Widget>[
+                                        SizedBox(height: ScreenHeight * .02),
+                                        Text(
+                                          'Contact Name',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: ScreenWidth * .06,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: <Widget>[
+                                            Image(
+                                              width: ScreenWidth * .07,
+                                              height: ScreenHeight * .05,
+                                              color: null,
+                                              image: AssetImage(
+                                                  'assets/images/icon_location.png'),
+                                            ),
+                                            Text(
+                                              'City, State, Country',
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: ScreenWidth * .035,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(ScreenWidth * .02),
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Image(
+                                                width: ScreenWidth * .05,
+                                                height: ScreenHeight * .02,
+                                                image: AssetImage(
+                                                    'assets/images/icon_fav.png'),
+                                              ),
+                                              Text(
+                                                'Favourite',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: ScreenWidth * .035,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
 
+                                        ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(ScreenWidth * .02),
+                                            ),
+                                            backgroundColor: Colors.blueAccent,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Image(
+                                                width: ScreenWidth * .06,
+                                                height: ScreenHeight * .03,
+                                                image: AssetImage(
+                                                    'assets/images/icon_contact.png'),
+                                              ),
+                                              Text(
+                                                'Update Info',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: ScreenWidth * .035,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(0, ScreenWidth*.02, 0, ScreenWidth*.02),
+                            child: Center(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(0.05 * ScreenWidth),
+                                  color: Colors.amber,
+                                ),
+                                width: ScreenWidth * 0.9,
+                                height: ScreenHeight * 0.25,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    //load contact image here
+                                    Image(
+                                      image: AssetImage('assets/images/Icon_Avatar.png'),
+                                    ),
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: <Widget>[
+                                        SizedBox(height: ScreenHeight * .02),
+                                        Text(
+                                          'Contact Name',
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: ScreenWidth * .06,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: <Widget>[
+                                            Image(
+                                              width: ScreenWidth * .07,
+                                              height: ScreenHeight * .05,
+                                              color: null,
+                                              image: AssetImage(
+                                                  'assets/images/icon_location.png'),
+                                            ),
+                                            Text(
+                                              'City, State, Country',
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: ScreenWidth * .035,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(ScreenWidth * .02),
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Image(
+                                                width: ScreenWidth * .05,
+                                                height: ScreenHeight * .02,
+                                                image: AssetImage(
+                                                    'assets/images/icon_fav.png'),
+                                              ),
+                                              Text(
+                                                'Favourite',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: ScreenWidth * .035,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius.circular(ScreenWidth * .02),
+                                            ),
+                                            backgroundColor: Colors.blueAccent,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Image(
+                                                width: ScreenWidth * .06,
+                                                height: ScreenHeight * .03,
+                                                image: AssetImage(
+                                                    'assets/images/icon_contact.png'),
+                                              ),
+                                              Text(
+                                                'Update Info',
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: ScreenWidth * .035,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),

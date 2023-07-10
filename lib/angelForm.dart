@@ -15,8 +15,8 @@ import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
 import 'package:firebase_core/firebase_core.dart';
-import 'package:audioplayers/audioplayers.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class VerifyIDForm extends StatefulWidget {
   const VerifyIDForm({Key? key}) : super(key: key);
@@ -119,6 +119,12 @@ class _VerifyIDFormState extends State<VerifyIDForm> {
       await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
+      final url = Uri.http('10.0.2.2:5000', '/images');
+      final response = await http.post(url, headers: {'Content-Type': 'application/json'}, body: json.encode({'Face_Link': downloadURL}));
+      print('Response status: ${response.statusCode}');
+
+
+
       print('Image uploaded. Download URL: $downloadURL');
     } catch (e) {
       print('Error uploading image to Firebase Storage: $e');
@@ -145,6 +151,15 @@ class _VerifyIDFormState extends State<VerifyIDForm> {
           _imageUrl = imageUrl;
         });
       }
+      //setting up image url to api
+      final url = Uri.http('10.0.2.2:5000', '/images');
+      final response = await http.post(url, headers: {'Content-Type': 'application/json'}, body: json.encode({'ID_Link': _imageUrl}));
+      print('Response status: ${response.statusCode}');
+
+
+
+
+
       print('Image uploaded. Download URL: $downloadURL');
     } catch (e) {
       print('Error uploading image to Firebase Storage: $e');
