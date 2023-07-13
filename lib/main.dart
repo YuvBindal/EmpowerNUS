@@ -29,12 +29,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const registerPage(),
+      home: const RegisterPage(),
     );
   }
 }
-
-//login page 3 sections: getting started, sign up , register.
 
 class getStarted extends StatefulWidget {
   const getStarted({Key? key}) : super(key: key);
@@ -95,7 +93,7 @@ class _getStartedState extends State<getStarted> {
                   ),
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => registerPage()));
+                        builder: (context) => RegisterPage()));
                   },
                   child: Text(
                     'Get Started',
@@ -117,14 +115,18 @@ class _getStartedState extends State<getStarted> {
   }
 }
 
-class registerPage extends StatefulWidget {
-  const registerPage({Key? key}) : super(key: key);
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  State<registerPage> createState() => _registerPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _registerPageState extends State<registerPage> {
+class _RegisterPageState extends State<RegisterPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -133,11 +135,59 @@ class _registerPageState extends State<registerPage> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _registerUser() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      print('The passwords do not match.');
+      return;
+    }
+
+    // Check if username is already taken
+    final usernameSnapshot = await _firestore
+        .collection('users')
+        .where('username', isEqualTo: _usernameController.text)
+        .get();
+
+    if (usernameSnapshot.docs.length > 0) {
+      print('Username already exists. Please choose another username.');
+      return;
+    }
+
+    // If username is not taken, continue with registration
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // If registration is successful, add user data to Firestore
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'username': _usernameController.text,
+          'email': _emailController.text,
+          'fullname': _nameController.text,
+        });
+
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => LoginPage()));
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        print('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        print('The account already exists for that email.');
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -174,15 +224,15 @@ class _registerPageState extends State<registerPage> {
                 ),
               ),
               Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height * 0.1,
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
                 decoration: BoxDecoration(
                   color: Colors.white,
                 ),
                 child: TextField(
-                  controller: _nameController,
+                  controller: _usernameController,
                   decoration: InputDecoration(
-                    hintText: 'Enter your full name',
+                    hintText: 'Enter your username',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
@@ -199,8 +249,8 @@ class _registerPageState extends State<registerPage> {
                 ),
               ),
               Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height * 0.1,
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
                 decoration: BoxDecoration(
                   color: Colors.white,
                 ),
@@ -224,8 +274,8 @@ class _registerPageState extends State<registerPage> {
                 ),
               ),
               Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height * 0.1,
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
                 decoration: BoxDecoration(
                   color: Colors.white,
                 ),
@@ -251,8 +301,8 @@ class _registerPageState extends State<registerPage> {
                 ),
               ),
               Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                height: MediaQuery.of(context).size.height * 0.1,
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
                 decoration: BoxDecoration(
                   color: Colors.white,
                 ),
@@ -285,32 +335,7 @@ class _registerPageState extends State<registerPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal[100],
                     ),
-                    onPressed: () async {
-                      if (_passwordController.text !=
-                          _confirmPasswordController.text) {
-                        print('The passwords do not match.');
-                      } else {
-                        try {
-                          UserCredential userCredential =
-                              await _auth.createUserWithEmailAndPassword(
-                            email: _emailController.text,
-                            password: _passwordController.text,
-                          );
-                          if (userCredential.user != null) {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => LoginPage()));
-                          }
-                        } on FirebaseAuthException catch (e) {
-                          if (e.code == 'weak-password') {
-                            print('The password provided is too weak.');
-                          } else if (e.code == 'email-already-in-use') {
-                            print('The account already exists for that email.');
-                          }
-                        } catch (e) {
-                          print(e);
-                        }
-                      }
-                    },
+                    onPressed: _registerUser,
                     child: Text(
                       'Register',
                       style: TextStyle(
@@ -551,7 +576,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => registerPage()));
+                            builder: (context) => RegisterPage()));
                       },
                       child: Text('Sign up'),
                     ),
@@ -865,8 +890,8 @@ class _HomePageState extends State<HomePage> {
                     child: ClipOval(
                       child: Image(
                         image: imageProvider,
-                        width: 750, // or any size you want
-                        height: 600, // or any size you want
+                        width: 500,
+                        height: 500,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -898,7 +923,9 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                   builder: (BuildContext context) =>
-                                      ChatPage()),
+                                      ChatListPage(
+                                        chats: [chats[0], chats[1]],
+                                      )),
                             );
                           },
                           icon: ImageIcon(
@@ -1517,7 +1544,9 @@ class _education_PageState extends State<education_Page> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext context) => ChatPage()),
+                          builder: (BuildContext context) => ChatListPage(
+                                chats: [chats[0], chats[1]],
+                              )),
                     );
                   },
                   icon: ImageIcon(
@@ -1578,9 +1607,11 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   User? _user;
@@ -1593,6 +1624,16 @@ class _AccountPageState extends State<AccountPage> {
     if (_user != null) {
       _nameController.text = _user!.displayName ?? '';
       _emailController.text = _user!.email ?? '';
+
+      _firestore
+          .collection('users')
+          .doc(_user!.uid)
+          .get()
+          .then((DocumentSnapshot documentSnapshot) {
+        if (documentSnapshot.exists) {
+          _usernameController.text = documentSnapshot.get('username') ?? '';
+        }
+      });
     }
   }
 
@@ -1631,7 +1672,7 @@ class _AccountPageState extends State<AccountPage> {
                   child: TextField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      hintText: 'Enter your name',
+                      hintText: 'Enter your new username',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
@@ -1840,19 +1881,26 @@ class _AccountPageState extends State<AccountPage> {
     if (_formKey.currentState!.validate()) {
       String name = _nameController.text;
       String email = _emailController.text;
+      String username = _usernameController.text;
       String password = _passwordController.text;
 
       if (_user != null) {
         _user!.updateDisplayName(name);
         _user!.updateEmail(email);
         _user!.updatePassword(password);
+
+        _firestore.collection('users').doc(_user!.uid).update({
+          'username': username,
+        });
       }
     }
   }
 }
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({Key? key}) : super(key: key);
+  final String username;
+
+  const ChatPage({Key? key, required this.username}) : super(key: key);
 
   @override
   _ChatPageState createState() => _ChatPageState();
@@ -1867,6 +1915,7 @@ class _ChatPageState extends State<ChatPage> {
       await FirebaseFirestore.instance.collection('messages').add({
         'text': messageController.text,
         'from': FirebaseAuth.instance.currentUser?.email,
+        'to': widget.username,
         'time': FieldValue.serverTimestamp(),
       });
       messageController.clear();
@@ -1885,7 +1934,7 @@ class _ChatPageState extends State<ChatPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Group Chat'),
+        title: Text('${widget.username}'),
         backgroundColor: Colors.teal,
       ),
       body: Container(
@@ -1902,6 +1951,7 @@ class _ChatPageState extends State<ChatPage> {
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('messages')
+                    .where('to', isEqualTo: widget.username)
                     .orderBy('time')
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -1955,7 +2005,7 @@ class _ChatPageState extends State<ChatPage> {
         padding: EdgeInsets.fromLTRB(
             ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
         child: FractionallySizedBox(
-          widthFactor: 1.2, // Take up the full available width
+          widthFactor: 1.2,
           child: Container(
             color: Colors.grey[300],
             height: ScreenHeight * .08,
@@ -1975,7 +2025,8 @@ class _ChatPageState extends State<ChatPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext context) => ChatPage()),
+                          builder: (BuildContext context) =>
+                              ChatPage(username: widget.username)),
                     );
                   },
                   icon: ImageIcon(
@@ -2069,6 +2120,506 @@ class Message extends StatelessWidget {
             ),
           )
         ],
+      ),
+    );
+  }
+}
+
+class Chat {
+  final String username;
+  final String lastMessage;
+  final String avatarUrl;
+
+  Chat({
+    required this.username,
+    required this.lastMessage,
+    required this.avatarUrl,
+  });
+}
+
+List<Chat> chats = [
+  Chat(
+      username: 'John',
+      lastMessage: 'Hello!',
+      avatarUrl: 'assets/images/user.png'),
+  Chat(
+      username: 'Ben',
+      lastMessage: 'How are you?',
+      avatarUrl: 'assets/images/user.png'),
+];
+
+class ChatListPage extends StatelessWidget {
+  final List<Chat> chats;
+
+  ChatListPage({required this.chats});
+
+  @override
+  Widget build(BuildContext context) {
+    double ScreenSize = MediaQuery.of(context).size.width;
+    double ScreenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      appBar: // AppBar in ChatListPage:
+
+          AppBar(
+        title: Text('Chats'),
+        backgroundColor: Colors.teal,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.add_comment),
+            tooltip: 'New Message',
+            onPressed: () {
+              // Navigate to the NewMessageScreen1 when this button is tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NewMessageScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.person_add),
+            tooltip: 'Add Friends',
+            onPressed: () {
+              // Navigate to the AddFriendsScreen when this button is tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddFriendsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: ListView.builder(
+          itemCount: chats.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundImage: AssetImage(chats[index].avatarUrl),
+              ),
+              title: Text(chats[index].username),
+              subtitle: Text(chats[index].lastMessage),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                // Navigate to chat page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ChatPage(username: chats[index].username),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
+        child: FractionallySizedBox(
+          widthFactor: 1.2, // Take up the full available width
+          child: Container(
+            color: Colors.grey[300],
+            height: ScreenHeight * .08,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => ChatListPage(
+                                chats: [chats[0], chats[1]],
+                              )),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => HomePage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => education_Page()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AddFriendsScreen extends StatefulWidget {
+  AddFriendsScreen({Key? key}) : super(key: key);
+
+  @override
+  _AddFriendsScreenState createState() => _AddFriendsScreenState();
+}
+
+class _AddFriendsScreenState extends State<AddFriendsScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _currentUser = FirebaseAuth.instance.currentUser!.uid;
+  String _email = '';
+
+  // Sends a friend request
+  Future<void> sendFriendRequest(String email) async {
+    final querySnapshot = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .get();
+
+    print('Query results: ${querySnapshot.docs}');
+
+    if (querySnapshot.docs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No user found with that email')),
+      );
+      return;
+    }
+
+    final userDoc = querySnapshot.docs.first;
+
+    await _firestore.collection('friend_requests').add({
+      'senderId': _currentUser,
+      'receiverId': userDoc.id,
+      'status': 'pending',
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Friend request sent!')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double ScreenSize = MediaQuery.of(context).size.width;
+    double ScreenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Add Friends'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: <Widget>[
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Enter email'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an email';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  setState(() {
+                    _email = value!;
+                  });
+                },
+              ),
+              ElevatedButton(
+                child: Text('Add Friend'),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    _formKey.currentState!.save();
+                    // Now you can use _email to add the friend
+                    sendFriendRequest(_email);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
+        child: FractionallySizedBox(
+          widthFactor: 1.2, // Take up the full available width
+          child: Container(
+            color: Colors.grey[300],
+            height: ScreenHeight * .08,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => ChatListPage(
+                                chats: [chats[0], chats[1]],
+                              )),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => HomePage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => education_Page()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class NewMessageScreen extends StatefulWidget {
+  @override
+  _NewMessageScreenState createState() => _NewMessageScreenState();
+}
+
+class _NewMessageScreenState extends State<NewMessageScreen> {
+  final messageController = TextEditingController();
+  String dropdownValue = 'Friend 1'; // Initialize to first friend
+
+  Future<void> sendMessage() async {
+    if (messageController.text.length > 0) {
+      // Implement your message sending logic here.
+    }
+    messageController.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double ScreenSize = MediaQuery.of(context).size.width;
+    double ScreenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('New Message'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              DropdownButton<String>(
+                value: dropdownValue,
+                icon: Icon(Icons.arrow_drop_down),
+                iconSize: 24,
+                elevation: 16,
+                style: TextStyle(color: Colors.deepPurple),
+                underline: Container(
+                  height: 2,
+                  color: Colors.deepPurpleAccent,
+                ),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    dropdownValue = newValue!;
+                  });
+                },
+                items: <String>['Friend 1', 'Friend 2', 'Friend 3']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+              TextField(
+                controller: messageController,
+                decoration: InputDecoration(
+                  hintText: "Enter your message here",
+                ),
+              ),
+              ElevatedButton(
+                onPressed: sendMessage,
+                child: Text('Send Message'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
+        child: FractionallySizedBox(
+          widthFactor: 1.2, // Take up the full available width
+          child: Container(
+            color: Colors.grey[300],
+            height: ScreenHeight * .08,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => ChatListPage(
+                                chats: [], // Pass the chat list
+                              )),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => HomePage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => education_Page()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

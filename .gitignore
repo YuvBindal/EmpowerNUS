@@ -42,3 +42,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+/Users/reetmitra/Desktop/EmpowerNUS\ Main/lib/test-project-123842-firebase-adminsdk-41s69-6f963ed033.json
