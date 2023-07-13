@@ -44,6 +44,7 @@ dependencies:
   cloud_firestore: ^4.8.0
   shared_preferences: ^2.1.2
   image_picker: ^0.8.9
+  url_launcher: ^6.1.12
 
 dev_dependencies:
   flutter_test:
