@@ -9,6 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -1285,52 +1286,91 @@ class education_Page extends StatefulWidget {
 
 class _education_PageState extends State<education_Page> {
   String? _selectedCategory = 'All';
-  String? _selectedMode = 'Modules';
-  List<DropdownMenuItem<String>> dropdownItems = [
-    DropdownMenuItem(
-      value: 'All',
-      child: Text('All'),
-    ),
-    DropdownMenuItem(
-      value: 'Assault',
-      child: Text('Assault'),
-    ),
-    DropdownMenuItem(
-      value: 'Burglary/Robbery/Theft',
-      child: Text('Burglary/Robbery/Theft'),
-    ),
-    DropdownMenuItem(
-      value: 'Vandalism',
-      child: Text('Vandalism'),
-    ),
-    DropdownMenuItem(
-      value: 'Fraud',
-      child: Text('Fraud'),
-    ),
-    DropdownMenuItem(
-      value: 'Harassment',
-      child: Text('Harassment'),
-    ),
-    DropdownMenuItem(
-      value: 'Drug Abuse',
-      child: Text('Drug Abuse'),
-    ),
-    DropdownMenuItem(
-      value: 'Others',
-      child: Text('Others'),
-    ),
-  ];
 
-  List<DropdownMenuItem<String>> dropdownModes = [
-    DropdownMenuItem(
-      value: 'Modules',
-      child: Text('Modules'),
-    ),
-    DropdownMenuItem(
-      value: 'Quizzes',
-      child: Text('Quizzes'),
-    ),
-  ];
+  Map<String, List<Map<String, String>>> resources = {
+    'All': [],
+    'Assault': [
+      {
+        'title': 'Preventing Assault',
+        'url': 'https://www.apa.org/topics/violence/preventing-assault'
+      },
+      {
+        'title': 'Safety and Self-Defence',
+        'url': 'https://www.rainn.org/articles/safety-and-self-defense-tips'
+      },
+    ],
+    'Burglary/Robbery/Theft': [
+      {
+        'title': 'Prevent Home Burglary',
+        'url':
+            'https://www.safewise.com/home-security-faq/how-to-prevent-burglary/'
+      },
+      {
+        'title': 'Prevent Car Theft',
+        'url': 'https://www.nhtsa.gov/road-safety/vehicle-theft-prevention'
+      },
+    ],
+    'Vandalism': [
+      {
+        'title': 'Prevent Vandalism',
+        'url':
+            'https://www.ncpc.org/resources/home-property-crime/prevent-auto-theft/'
+      },
+      {
+        'title': 'Vandalism Facts',
+        'url':
+            'https://www.conserve-energy-future.com/various-vandalism-facts.php'
+      },
+    ],
+    'Fraud': [
+      {
+        'title': 'Prevent Fraud',
+        'url':
+            'https://www.ftc.gov/faq/consumer-protection/defend-against-identity-theft'
+      },
+      {
+        'title': 'Understanding Fraud',
+        'url':
+            'https://www.aarp.org/money/scams-fraud/info-2019/fraud-types.html'
+      },
+    ],
+    'Harassment': [
+      {'title': 'Prevent Harassment', 'url': 'https://www.eeoc.gov/harassment'},
+      {
+        'title': 'Understanding Harassment',
+        'url': 'https://www.stopbullying.gov/cyberbullying/what-is-it'
+      },
+    ],
+    'Drug Abuse': [
+      {
+        'title': 'Understanding Drug Abuse',
+        'url':
+            'https://www.drugabuse.gov/publications/drugs-brains-behavior-science-addiction/drug-abuse-addiction'
+      },
+      {
+        'title': 'Prevent Drug Abuse',
+        'url': 'https://www.cdc.gov/drugoverdose/prevention/index.html'
+      },
+    ],
+    'Others': [
+      {
+        'title': 'General Safety Tips',
+        'url': 'https://www.ready.gov/be-informed'
+      },
+      {
+        'title': 'Preventing Crime',
+        'url': 'https://www.crimesolutions.gov/TopicDetails.aspx?ID=63'
+      },
+    ],
+  };
+
+  void launchURL(String url) async {
+    if (await canLaunchUrl(url as Uri)) {
+      await launchUrl(url as Uri);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1338,263 +1378,131 @@ class _education_PageState extends State<education_Page> {
     double ScreenHeight = MediaQuery.of(context).size.height;
     double ScreenFont = MediaQuery.of(context).textScaleFactor;
 
-    return ScaffoldMessenger(
-      child: Scaffold(
-        drawer: Container(
-          width: ScreenWidth * .5,
-          child: Drawer(
-            child: ListView(
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Column(
+          children: <Widget>[
+            SizedBox(height: ScreenHeight * .05),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
-                Container(
-                  height: ScreenHeight * .15,
-                  child: DrawerHeader(
-                    child: Text(
-                      'EmpowerNUS',
-                      style: TextStyle(
-                        fontFamily: 'Open Sans',
-                        fontSize: 24 * MediaQuery.of(context).textScaleFactor,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.25,
-                        color: Colors.black,
+                IconButton(
+                  onPressed: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_TabBar.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenHeight * .035,
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(ScreenWidth * .05, 0, 0, 0),
+                  child: SizedBox(
+                    width: ScreenWidth * .7,
+                    height: ScreenHeight * .08,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search',
                       ),
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.greenAccent,
+                      onChanged: (value) {
+                        // perform filtration logic
+                      },
                     ),
                   ),
                 ),
-                ListTile(
-                  title: Text('Achievements'),
-                  onTap: () {
-                    // TODO: Handle item 1 press
-                  },
-                ),
-                ListTile(
-                  title: Text('Progress Report'),
-                  onTap: () {
-                    // TODO: Handle item 2 press
+              ],
+            ),
+            SizedBox(height: ScreenHeight * .01),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                DropdownButton<String>(
+                  value: _selectedCategory,
+                  items: resources.keys.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategory = value;
+                    });
                   },
                 ),
               ],
             ),
-          ),
-        ),
-        body: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/Image_Background.png'),
-              fit: BoxFit.fill,
+            Container(
+              height: ScreenHeight * 0.6,
+              child: ListView.builder(
+                itemCount: resources[_selectedCategory!]?.length ?? 0,
+                itemBuilder: (context, index) {
+                  if (_selectedCategory == 'All') {
+                    return ListTile(
+                      title: Text(
+                          resources[_selectedCategory!]?[index]['title'] ?? ''),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => (resources == null)
+                              ? Center(child: CircularProgressIndicator())
+                              : SubCategoryPage(
+                                  category: resources.keys.toList()[index],
+                                  resources: resources,
+                                  launchURL: (url) => launchURL(url),
+                                ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return ListTile(
+                      title: Text(
+                          resources[_selectedCategory!]?[index]['title'] ?? ''),
+                      onTap: () => launchURL(
+                          resources[_selectedCategory!]?[index]['url'] ?? ''),
+                    );
+                  }
+                },
+              ),
             ),
-          ),
-          child: Column(
-            children: <Widget>[
-              SizedBox(height: ScreenHeight * .05),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  Builder(builder: (context) {
-                    return IconButton(
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                      icon: ImageIcon(
-                        AssetImage('assets/images/Icon_TabBar.png'),
-                        color: null,
-                      ),
-                      iconSize: ScreenHeight * .035,
-                    );
-                  }),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(ScreenWidth * .05, 0, 0, 0),
-                    child: SizedBox(
-                      width: ScreenWidth * .7,
-                      height: ScreenHeight * .08,
-                      child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Search',
-                          ),
-                          onChanged: (value) {
-                            //perform filteration logic
-                          }),
-                    ),
-                  ),
-                ],
-              ),
-              //height .13 covered
-              SizedBox(height: ScreenHeight * .01),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  DropdownButton<String>(
-                    value: _selectedCategory,
-                    items: dropdownItems,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-                    hint: Text(
-                      'Select a mode',
-                      style: TextStyle(
-                        fontFamily: 'Open Sans',
-                        fontSize: 14 * ScreenFont,
-                        fontStyle: FontStyle.italic,
-                        letterSpacing: ScreenFont * 1.5,
-                        color: Colors.grey[300],
-                      ),
-                    ),
-                    // Button options styling
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16 * ScreenFont,
-                    ),
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.grey[300],
-                    ),
-                    dropdownColor: Colors.grey[300],
-                    underline: Container(
-                      height: ScreenHeight * .001,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                  DropdownButton<String>(
-                    value: _selectedMode,
-                    items: dropdownModes,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedMode = value;
-                      });
-                    },
-                    hint: Text(
-                      'Select an option',
-                      style: TextStyle(
-                        fontFamily: 'Open Sans',
-                        fontSize: 14 * ScreenFont,
-                        fontStyle: FontStyle.italic,
-                        letterSpacing: ScreenFont * 1.5,
-                        color: Colors.grey[300],
-                      ),
-                    ),
-                    // Button options styling
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16 * ScreenFont,
-                    ),
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.grey[300],
-                    ),
-                    dropdownColor: Colors.grey[300],
-                    underline: Container(
-                      height: ScreenHeight * .001,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                ],
-              ),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Container(
-                    width: ScreenWidth * .8,
-                    child: LinearProgressIndicator(
-                      minHeight: ScreenHeight * .03,
-                      color: Colors.blueAccent,
-                      value: .5, //here a function keeping track of the value
-                      //for courses completed by student can be returned.
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: ScreenHeight * .02),
-              Container(
-                width: ScreenWidth * .8,
-                height: ScreenHeight * .6,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(ScreenWidth * .02),
-                  color: Colors.grey[700],
-                ),
-              )
-            ],
-          ),
+          ],
         ),
-        persistentFooterButtons: [
-          Flex(
-            direction: Axis.horizontal,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Expanded(
-                child: IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Chat.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenWidth * .1,
-                ),
-              ),
-              Expanded(
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => ChatListPage(
-                                chats: [chats[0], chats[1]],
-                              )),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Network.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenWidth * .1,
-                ),
-              ),
-              Expanded(
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => HomePage()),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Home.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenWidth * .1,
-                ),
-              ),
-              Expanded(
-                child: IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Read.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenWidth * .1,
-                ),
-              ),
-              Expanded(
-                child: IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Map.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenWidth * .1,
-                ),
-              ),
-            ],
-          ),
-        ],
+      ),
+    );
+  }
+}
+
+class SubCategoryPage extends StatelessWidget {
+  final String category;
+  final Map<String, List<Map<String, String>>> resources;
+  final Function launchURL;
+
+  SubCategoryPage(
+      {required this.category,
+      required this.resources,
+      required this.launchURL});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(category),
+      ),
+      body: ListView.builder(
+        itemCount: resources[category]?.length ?? 0,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(resources[category]?[index]['title'] ?? ''),
+            onTap: () => launchURL(resources[category]?[index]['url'] ?? ''),
+          );
+        },
       ),
     );
   }
