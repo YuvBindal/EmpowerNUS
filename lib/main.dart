@@ -12,11 +12,16 @@ import 'dart:async';
 import 'chatMessage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'angelForm.dart';
+import 'ContactList.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'angelContact.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
+  print(message);
   runApp(MaterialApp(
     title: 'EmpowerNUS',
     debugShowCheckedModeBanner: false,
@@ -24,9 +29,21 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: angelList(),
+    home: angelForm(),
   ));
 }
+
+
+/*
+Logic: after message returns if its not a match just tell them to take a picture again.
+If it is a match. Add contents of angelDetails to angels. Pass those details of contact first and last name + city/state/country and create an angel
+contact side by side.
+
+ */
+
+List<angelContact> angelContacts = [];
+List<angelDetails> angels = [];
+
 
 class Scanner extends StatefulWidget {
   @override
@@ -39,6 +56,8 @@ class _ScannerState extends State<Scanner> {
   bool _isFrontCamera = false;
   bool _isTakingPicture = false;
   bool _picStorage = false;
+  bool _isLoadingReport = false;
+  List<ReportFrame> reportFrames = [];
 
   @override
   void initState() {
@@ -51,6 +70,12 @@ class _ScannerState extends State<Scanner> {
     controller.dispose();
     super.dispose();
   }
+  void addFrame() {
+    setState(() {
+      reportFrames.add(ReportFrame());
+      _isLoadingReport = false;
+    });
+  }
 
   void initializeCamera() async {
     final cameras = await availableCameras();
@@ -59,20 +84,29 @@ class _ScannerState extends State<Scanner> {
       camera,
       ResolutionPreset.high,
     );
-    await controller.initialize();
-    setState(() {
-      _isCameraInitialized = true;
-    });
+
+    try {
+      await controller.initialize();
+      setState(() {
+        _isCameraInitialized = true;
+      });
+    } catch (e) {
+      print('Error initializing camera: $e');
+    }
   }
 
-  void switchCamera() {
+  void switchCamera() async {
     setState(() {
       _isFrontCamera = !_isFrontCamera;
       _isCameraInitialized = false;
     });
+
     controller.dispose();
+    await Future.delayed(Duration(milliseconds: 500));
+
     initializeCamera();
   }
+
 
   Future<void> takePicture() async {
     if (_isTakingPicture) return;
@@ -87,8 +121,10 @@ class _ScannerState extends State<Scanner> {
     try {
       final XFile picture = await controller.takePicture();
       print('Picture saved at: ${picture.path}');
-      uploadImageToFirebase(
-          picture.path); // Call the method to upload the image
+      uploadImageToFirebase(picture.path); // Call the method to upload the image
+
+
+
     } catch (e) {
       print('Error taking picture: $e');
     } finally {
@@ -96,9 +132,13 @@ class _ScannerState extends State<Scanner> {
         _isTakingPicture = false;
       });
     }
+
   }
 
   Future<void> uploadImageToFirebase(String imagePath) async {
+    setState(() {
+      _isLoadingReport = true;
+    });
     try {
       final fileName = DateTime.now().millisecondsSinceEpoch.toString();
       final destination = 'images/$fileName.png';
@@ -112,7 +152,14 @@ class _ScannerState extends State<Scanner> {
           await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
+      //setting up image url to api
+      final url = Uri.http('10.0.2.2:5000', '/reportGen');
+      final response = await http.post(url, headers: {'Content-Type': 'application/json'}, body: json.encode({'Raw_Picture': downloadURL}));
+      print('Response status: ${response.statusCode}');
+
+
       print('Image uploaded. Download URL: $downloadURL');
+      addFrame();
     } catch (e) {
       print('Error uploading image to Firebase Storage: $e');
     }
@@ -129,7 +176,7 @@ class _ScannerState extends State<Scanner> {
           ref.putFile(File(videoPath));
 
       final firebase_storage.TaskSnapshot taskSnapshot =
-          await uploadTask.whenComplete(() {});
+      await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
       print('Video uploaded. Download URL: $downloadURL');
@@ -185,6 +232,43 @@ class _ScannerState extends State<Scanner> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
+            //can better customise the UI
+
+            _isLoadingReport ?
+            Container(
+              width: ScreenWidth * 1,
+              height: ScreenHeight * .7,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.5), // Set opacity to 50%
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+
+
+
+                    ),
+                    SizedBox(height: ScreenHeight *.1),
+                    Text(
+                      'Your report is being generated, please wait!',
+                      style: GoogleFonts.montserrat(
+                        fontSize: ScreenWidth * .04,
+
+                      ),
+
+
+                    ),
+                  ],
+                ),
+              ),
+
+            )
+
+                :
+
             Container(
               // camera goes here
               width: ScreenWidth * 1,
@@ -193,7 +277,9 @@ class _ScannerState extends State<Scanner> {
                 border: Border.all(
                     color: Colors.red, width: _isTakingPicture ? 5.0 : 0.0),
               ),
-              child: _isCameraInitialized
+              child:
+
+              _isCameraInitialized
                   ? AspectRatio(
                       aspectRatio: controller.value.aspectRatio,
                       child: CameraPreview(controller),
@@ -205,29 +291,12 @@ class _ScannerState extends State<Scanner> {
               width: ScreenWidth * 1,
               height: ScreenHeight * .15,
               color: Colors.grey[800],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  (_picStorage)
-                      ? Text('true')
-                      : Text(
-                          'No Images Found',
-                          style: GoogleFonts.montserrat(
-                            textStyle: TextStyle(
-                              shadows: [
-                                Shadow(
-                                  color: Colors.grey,
-                                  offset: Offset(2, 2),
-                                  blurRadius: 2,
-                                ),
-                              ],
-                              fontSize: ScreenWidth * 0.05 * 1.1,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[200],
-                            ),
-                          ),
-                        ),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: reportFrames,
+                ),
               ),
             ),
             Container(
@@ -528,6 +597,9 @@ class angelList extends StatefulWidget {
 }
 
 class _angelListState extends State<angelList> {
+
+
+
   @override
   Widget build(BuildContext context) {
     double ScreenHeight = MediaQuery.of(context).size.height;
@@ -562,7 +634,15 @@ class _angelListState extends State<angelList> {
                         height: ScreenHeight * .06,
                         width: ScreenWidth * .42,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                builder: (BuildContext context) =>
+                                angelForm())
+                            );
+
+                          },
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius:
@@ -642,350 +722,7 @@ class _angelListState extends State<angelList> {
                       color: Colors.white,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          //angel list contacts go in here
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(0, ScreenWidth*.02, 0, ScreenWidth*.02),
-                            child: Center(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(0.05 * ScreenWidth),
-                                  color: Colors.amber,
-                                ),
-                                width: ScreenWidth * 0.9,
-                                height: ScreenHeight * 0.25,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    //load contact image here
-                                    Image(
-                                      image: AssetImage('assets/images/Icon_Avatar.png'),
-                                    ),
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: <Widget>[
-                                        SizedBox(height: ScreenHeight * .02),
-                                        Text(
-                                          'Contact Name',
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: ScreenWidth * .06,
-                                          ),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: <Widget>[
-                                            Image(
-                                              width: ScreenWidth * .07,
-                                              height: ScreenHeight * .05,
-                                              color: null,
-                                              image: AssetImage(
-                                                  'assets/images/icon_location.png'),
-                                            ),
-                                            Text(
-                                              'City, State, Country',
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: ScreenWidth * .035,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(ScreenWidth * .02),
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Image(
-                                                width: ScreenWidth * .05,
-                                                height: ScreenHeight * .02,
-                                                image: AssetImage(
-                                                    'assets/images/icon_fav.png'),
-                                              ),
-                                              Text(
-                                                'Favourite',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: ScreenWidth * .035,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(ScreenWidth * .02),
-                                            ),
-                                            backgroundColor: Colors.blueAccent,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Image(
-                                                width: ScreenWidth * .06,
-                                                height: ScreenHeight * .03,
-                                                image: AssetImage(
-                                                    'assets/images/icon_contact.png'),
-                                              ),
-                                              Text(
-                                                'Update Info',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: ScreenWidth * .035,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Add more items as needed
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(0, ScreenWidth*.02, 0, ScreenWidth*.02),
-                            child: Center(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(0.05 * ScreenWidth),
-                                  color: Colors.amber,
-                                ),
-                                width: ScreenWidth * 0.9,
-                                height: ScreenHeight * 0.25,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    //load contact image here
-                                    Image(
-                                      image: AssetImage('assets/images/Icon_Avatar.png'),
-                                    ),
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: <Widget>[
-                                        SizedBox(height: ScreenHeight * .02),
-                                        Text(
-                                          'Contact Name',
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: ScreenWidth * .06,
-                                          ),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: <Widget>[
-                                            Image(
-                                              width: ScreenWidth * .07,
-                                              height: ScreenHeight * .05,
-                                              color: null,
-                                              image: AssetImage(
-                                                  'assets/images/icon_location.png'),
-                                            ),
-                                            Text(
-                                              'City, State, Country',
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: ScreenWidth * .035,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(ScreenWidth * .02),
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Image(
-                                                width: ScreenWidth * .05,
-                                                height: ScreenHeight * .02,
-                                                image: AssetImage(
-                                                    'assets/images/icon_fav.png'),
-                                              ),
-                                              Text(
-                                                'Favourite',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: ScreenWidth * .035,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(ScreenWidth * .02),
-                                            ),
-                                            backgroundColor: Colors.blueAccent,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Image(
-                                                width: ScreenWidth * .06,
-                                                height: ScreenHeight * .03,
-                                                image: AssetImage(
-                                                    'assets/images/icon_contact.png'),
-                                              ),
-                                              Text(
-                                                'Update Info',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: ScreenWidth * .035,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(0, ScreenWidth*.02, 0, ScreenWidth*.02),
-                            child: Center(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(0.05 * ScreenWidth),
-                                  color: Colors.amber,
-                                ),
-                                width: ScreenWidth * 0.9,
-                                height: ScreenHeight * 0.25,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    //load contact image here
-                                    Image(
-                                      image: AssetImage('assets/images/Icon_Avatar.png'),
-                                    ),
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: <Widget>[
-                                        SizedBox(height: ScreenHeight * .02),
-                                        Text(
-                                          'Contact Name',
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: ScreenWidth * .06,
-                                          ),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: <Widget>[
-                                            Image(
-                                              width: ScreenWidth * .07,
-                                              height: ScreenHeight * .05,
-                                              color: null,
-                                              image: AssetImage(
-                                                  'assets/images/icon_location.png'),
-                                            ),
-                                            Text(
-                                              'City, State, Country',
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: ScreenWidth * .035,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(ScreenWidth * .02),
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Image(
-                                                width: ScreenWidth * .05,
-                                                height: ScreenHeight * .02,
-                                                image: AssetImage(
-                                                    'assets/images/icon_fav.png'),
-                                              ),
-                                              Text(
-                                                'Favourite',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: ScreenWidth * .035,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        ElevatedButton(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(ScreenWidth * .02),
-                                            ),
-                                            backgroundColor: Colors.blueAccent,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Image(
-                                                width: ScreenWidth * .06,
-                                                height: ScreenHeight * .03,
-                                                image: AssetImage(
-                                                    'assets/images/icon_contact.png'),
-                                              ),
-                                              Text(
-                                                'Update Info',
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: ScreenWidth * .035,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        children: angelContacts,
                       ),
                     ),
                   ),

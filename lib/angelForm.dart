@@ -17,9 +17,17 @@ import 'package:path/path.dart' show join;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'angelContact.dart';
+
+String message = '';
+CollectionReference angelsCollection =
+FirebaseFirestore.instance.collection('angels');
 
 class VerifyIDForm extends StatefulWidget {
-  const VerifyIDForm({Key? key}) : super(key: key);
+  angelDetails AngelDetails = angelDetails("", "", "", "", "", "", "", "", "", "");
+  VerifyIDForm({required this.AngelDetails, Key? key}) : super(key: key);
 
   @override
   State<VerifyIDForm> createState() => _VerifyIDFormState();
@@ -28,6 +36,7 @@ class VerifyIDForm extends StatefulWidget {
 class _VerifyIDFormState extends State<VerifyIDForm> {
   String? filePath;
   String? _imageUrl;
+  late angelDetails AngelDetails;
 
   bool isFilePickerActive = false;
 
@@ -37,17 +46,85 @@ class _VerifyIDFormState extends State<VerifyIDForm> {
   bool _isFrontCamera = false;
   bool _picStorage = false;
 
+
   @override
   void initState() {
     super.initState();
     initializeCamera();
+    AngelDetails = widget.AngelDetails;
   }
+
 
   @override
   void dispose() {
     controller.dispose();
     super.dispose();
   }
+
+  /* API ENDPOINT DATA RETRIEVAL*/
+  void fetchMessage() async {
+    final url = Uri.http('10.0.2.2:5000', '/images');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      setState(() {
+        message = jsonData['load_status'].toString();
+      });
+    //after verifications push angelDetails to angels list, store to firebase. reset angelDetails
+
+
+    if (message == 'The faces are similar') {
+        setState(() {
+          angels.add(AngelDetails);
+          angelContacts.add(angelContact(firstName: AngelDetails.firstName, lastName: AngelDetails.lastName, city: AngelDetails.city, state: AngelDetails.state, country: AngelDetails.country));
+        });
+        //push this to firebase
+        Map<String, dynamic> angelData = {
+          'firstName': AngelDetails.firstName,
+          'lastName': AngelDetails.lastName,
+          'userID': AngelDetails.userID,
+          'phoneNumber': AngelDetails.phoneNumber,
+          'email': AngelDetails.email,
+          'street': AngelDetails.street,
+          'city': AngelDetails.city,
+          'state': AngelDetails.state,
+          'country': AngelDetails.country,
+          'emergencyMessage': AngelDetails.emergencyMessage,
+        };
+        await angelsCollection.add(angelData);
+
+        //reroute back to the angel contact page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (BuildContext context) =>
+                  angelList()),
+        );
+
+
+
+        //increase angel Index after fetching data
+
+
+
+    }
+
+
+
+
+      print(message);
+      print(message.runtimeType);
+      print(jsonData);
+      print(jsonData.runtimeType);
+
+    } else {
+      throw Exception('Failed to retrieve message from the API');
+    }
+  }
+
+
+
 
   void initializeCamera() async {
     final cameras = await availableCameras();
@@ -274,8 +351,14 @@ class _VerifyIDFormState extends State<VerifyIDForm> {
                           : Center(child: CircularProgressIndicator()),
                     ),
                     TextButton(
-                      onPressed:  () {
+                      onPressed:  () async {
                         takePicture();
+                        await Future.delayed(Duration(milliseconds: 8000)); //wait for 10 seconds (temporary fix should add a real time communicatoon mehtod)
+                        fetchMessage();
+
+
+
+
                       },
                       child: Text(
                         'Scan Face',
@@ -286,6 +369,40 @@ class _VerifyIDFormState extends State<VerifyIDForm> {
                         ),
                       ),
                     ),
+
+                    /*
+                    *
+                    *
+                    *
+                    *  if (message == 'The faces are similar')
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                0, 0, screenWidth * .02, 0),
+                            child: Icon(
+                              Icons.check,
+                              color: Colors.green,
+                              size: screenWidth * .05,
+                            ),
+                          ),
+                          Text(
+                            'Verified, redirecting...',
+                            style: GoogleFonts.montserrat(
+                              fontSize: screenWidth * .05,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * .1),
+
+                        ],
+
+                      ),
+                      * */
+
+
 
                   ],
                 ),
@@ -361,7 +478,22 @@ class _VerifyIDFormState extends State<VerifyIDForm> {
     );
   }
 }
-
+int angelIndex = 0;
+class angelDetails {
+  String? firstName;
+  String? lastName;
+  String? userID;
+  String? phoneNumber;
+  String? email;
+  String? street;
+  String? city;
+  String? state;
+  String? country;
+  String? emergencyMessage;
+  angelDetails(this.firstName, this.lastName,
+      this.userID,this.phoneNumber,this.email,this.street,
+      this.city, this.state,this.country, this.emergencyMessage);
+}
 
 
 class angelForm extends StatefulWidget {
@@ -374,19 +506,65 @@ class angelForm extends StatefulWidget {
 class _angelFormState extends State<angelForm> {
   late OpenAI? chatGPT;
   TextEditingController _controller = TextEditingController();
+  TextEditingController _firstName = TextEditingController();
+  TextEditingController _lastName = TextEditingController();
+  TextEditingController _userID = TextEditingController();
+  TextEditingController _phone = TextEditingController();
+  TextEditingController _email = TextEditingController();
+  TextEditingController _street = TextEditingController();
+  TextEditingController _city = TextEditingController();
+  TextEditingController _state = TextEditingController();
+  TextEditingController _country = TextEditingController();
+
+  angelDetails AngelDetails = angelDetails('', '', '', '', '', '', '', '', '', '');
+
+  //for testing purposes
+  void printAngel() {
+    print(AngelDetails.firstName);
+    print(AngelDetails.lastName);
+    print(AngelDetails.userID);
+    print(AngelDetails.phoneNumber);
+    print(AngelDetails.email);
+    print(AngelDetails.street);
+    print(AngelDetails.city);
+    print(AngelDetails.state);
+    print(AngelDetails.country);
+    print(AngelDetails.emergencyMessage);
+  }
 
   @override
   void initState() {
     chatGPT = OpenAI.instance.build(
         token: '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',
         baseOption: HttpSetup(receiveTimeout: Duration(seconds: 60000)));
+    _firstName.text = AngelDetails.firstName ?? '';
+    _lastName.text = AngelDetails.lastName ?? '';
+    _userID.text = AngelDetails.userID ?? '';
+    _phone.text = AngelDetails.phoneNumber ?? '';
+    _email.text = AngelDetails.email ?? '';
+    _street.text = AngelDetails.street ?? '';
+    _city.text = AngelDetails.city ?? '';
+    _state.text = AngelDetails.state ?? '';
+    _country.text = AngelDetails.country ?? '';
+    _controller.text = AngelDetails.emergencyMessage ?? '';
     super.initState();
-  }
 
+  }
+  //prevent memory leaks
   @override
   void dispose() {
     chatGPT?.close();
     _controller.dispose();
+    _firstName.dispose();
+    _lastName.dispose();
+    _userID.dispose();
+    _phone.dispose();
+    _email.dispose();
+    _street.dispose();
+    _city.dispose();
+    _state.dispose();
+    _country.dispose();
+
     super.dispose();
   }
 
@@ -416,34 +594,19 @@ class _angelFormState extends State<angelForm> {
           width: ScreenWidth * 1,
           height: ScreenHeight * .1,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextButton(
-                onPressed: () {},
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: Text(
-                    'Cancel',
-                    style: GoogleFonts.montserrat(
-                      letterSpacing: .8,
-                  ),
-
-                ),
-              ),
-              Text(
-                'New Contact',
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: .8,
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                    'Confirm',
-                    style: GoogleFonts.montserrat(
+                  'New Contact',
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.bold,
                     letterSpacing: .8,
-                    )
+                  ),
                 ),
               ),
+
             ],
           ),
         ),
@@ -491,12 +654,14 @@ class _angelFormState extends State<angelForm> {
                           borderRadius: BorderRadius.circular(ScreenWidth * .01),
                         ),
                     ),
+                      controller: _firstName,
                   ),
                   ),
                   Container(
                     width: ScreenWidth,
                     height: ScreenHeight * .08,
                     child: TextField(
+                      controller: _lastName,
                       decoration: InputDecoration(
                         hintText: 'Last name',
                         border: OutlineInputBorder(
@@ -509,6 +674,8 @@ class _angelFormState extends State<angelForm> {
                     width: ScreenWidth,
                     height: ScreenHeight * .08,
                     child: TextField(
+                      controller: _userID,
+
                       decoration: InputDecoration(
                         hintText: 'EmpowerNUS #userID',
                         border: OutlineInputBorder(
@@ -539,6 +706,7 @@ class _angelFormState extends State<angelForm> {
                   width: ScreenWidth * .8,
                   height: ScreenHeight * .08,
                   child: TextField(
+                    controller: _phone,
                     decoration: InputDecoration(
                       hintText: 'Add Phone',
                       border: OutlineInputBorder(
@@ -568,6 +736,8 @@ class _angelFormState extends State<angelForm> {
                   width: ScreenWidth * .8,
                   height: ScreenHeight * .08,
                   child: TextField(
+                    controller: _email,
+
                     decoration: InputDecoration(
                       hintText: 'Add Email',
                       border: OutlineInputBorder(
@@ -591,6 +761,7 @@ class _angelFormState extends State<angelForm> {
             Container(
               width: ScreenWidth * .8,
               child: TextField(
+                controller: _street,
                 decoration: InputDecoration(
                   hintText: 'Add Street/Flat No.',
                   border: OutlineInputBorder(
@@ -606,6 +777,7 @@ class _angelFormState extends State<angelForm> {
                 Container(
                   width: ScreenWidth * .3,
                   child: TextField(
+                    controller: _city,
                     decoration: InputDecoration(
                       hintText: 'Add City',
                       border: OutlineInputBorder(
@@ -617,6 +789,7 @@ class _angelFormState extends State<angelForm> {
                 Container(
                   width: ScreenWidth * .3,
                   child: TextField(
+                    controller: _state,
                     decoration: InputDecoration(
                       hintText: 'Add State',
                       border: OutlineInputBorder(
@@ -628,6 +801,7 @@ class _angelFormState extends State<angelForm> {
                 Container(
                   width: ScreenWidth * .3,
                   child: TextField(
+                    controller: _country,
                     decoration: InputDecoration(
                       hintText: 'Add Country',
                       border: OutlineInputBorder(
@@ -668,7 +842,7 @@ class _angelFormState extends State<angelForm> {
                   width: ScreenWidth *.1,
                   child: IconButton(
                     onPressed: () {
-                      generateMessage();
+                      printAngel();
                     },
                     icon: Image(
                       image: AssetImage('assets/images/icon_reload.png'),
@@ -685,7 +859,26 @@ class _angelFormState extends State<angelForm> {
                 borderRadius: BorderRadius.circular(ScreenWidth * .02),
               ),
               child: TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  AngelDetails.firstName = _firstName.text;
+                  AngelDetails.lastName = _lastName.text;
+                  AngelDetails.userID = _userID.text;
+                  AngelDetails.phoneNumber = _phone.text;
+                  AngelDetails.email = _email.text;
+                  AngelDetails.street = _street.text;
+                  AngelDetails.city = _city.text;
+                  AngelDetails.state = _state.text;
+                  AngelDetails.country = _country.text;
+                  AngelDetails.emergencyMessage = _controller.text;
+                  printAngel();
+                  //after verifications push angelDetails to angels list, store to firebase. reset angelDetails
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                      builder: (BuildContext context) =>
+                      VerifyIDForm(AngelDetails: AngelDetails)),
+                  );
+                },
                 child: Text(
                     'Verify Contact ID',
                     style: GoogleFonts.montserrat(
