@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - Compiled_App
+      - chatbot
 
 jobs:
   build_and_test:
