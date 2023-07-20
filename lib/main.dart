@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const RegisterPage(),
+      home: const getStarted(),
     );
   }
 }
@@ -124,11 +125,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
+//  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -137,7 +135,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
     _usernameController.dispose();
-    _nameController.dispose();
+//    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -174,7 +172,6 @@ class _RegisterPageState extends State<RegisterPage> {
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'username': _usernameController.text,
           'email': _emailController.text,
-          'fullname': _nameController.text,
         });
 
         Navigator.of(context)
@@ -336,7 +333,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal[100],
                     ),
-                    onPressed: _registerUser,
+                    onPressed: () {
+                      _registerUser();
+                    },
                     child: Text(
                       'Register',
                       style: TextStyle(
@@ -1292,11 +1291,12 @@ class _education_PageState extends State<education_Page> {
     'Assault': [
       {
         'title': 'Preventing Assault',
-        'url': 'https://www.apa.org/topics/violence/preventing-assault'
+        'url': 'https://www.fairview.org/patient-education/116405EN'
       },
       {
         'title': 'Safety and Self-Defence',
-        'url': 'https://www.rainn.org/articles/safety-and-self-defense-tips'
+        'url':
+            'https://www.corporatewellnessmagazine.com/article/smart-safe-self-defense'
       },
     ],
     'Burglary/Robbery/Theft': [
@@ -1364,9 +1364,10 @@ class _education_PageState extends State<education_Page> {
     ],
   };
 
-  void launchURL(String url) async {
-    if (await canLaunchUrl(url as Uri)) {
-      await launchUrl(url as Uri);
+  void launchURL(String urlString) async {
+    Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
       throw 'Could not launch $url';
     }
@@ -1376,7 +1377,7 @@ class _education_PageState extends State<education_Page> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    // double screenFont = MediaQuery.of(context).textScaleFactor;
+    double screenFont = MediaQuery.of(context).textScaleFactor;
 
     return Scaffold(
       appBar: AppBar(
@@ -2565,13 +2566,35 @@ class ChatListPage extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: Icon(Icons.person_add),
+            icon: Icon(Icons.person_search),
             tooltip: 'Add Friends',
             onPressed: () {
               // Navigate to the AddFriendsScreen when this button is tapped
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AddFriendsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.person_add),
+            tooltip: 'Friend Requests',
+            onPressed: () {
+              // Navigate to the AddFriendsScreen when this button is tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FriendRequestsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.people_alt),
+            tooltip: 'Friend Requests',
+            onPressed: () {
+              // Navigate to the AddFriendsScreen when this button is tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FriendListScreen()),
               );
             },
           ),
@@ -2701,27 +2724,85 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
   final String _currentUser = FirebaseAuth.instance.currentUser!.uid;
   String _email = '';
 
-  // Sends a friend request
-  Future<void> sendFriendRequest(String email) async {
+  Future<bool> areAlreadyFriends(String userId1, String userId2) async {
+    final querySnapshot = await _firestore
+        .collection('friends')
+        .where('user1', whereIn: [userId1, userId2]).get();
+
+    final isAlreadyFriend = querySnapshot.docs.any((doc) {
+      final user1 = doc['user1'] as String;
+      final user2 = doc['user2'] as String;
+      return (user1 == userId1 && user2 == userId2) ||
+          (user1 == userId2 && user2 == userId1);
+    });
+
+    return isAlreadyFriend;
+  }
+
+// Sends a friend request
+  Future<void> sendFriendRequest(String username) async {
     final querySnapshot = await _firestore
         .collection('users')
-        .where('email', isEqualTo: email)
+        .where('username', isEqualTo: username)
         .get();
 
     print('Query results: ${querySnapshot.docs}');
 
     if (querySnapshot.docs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No user found with that email')),
+        SnackBar(content: Text('No user found with that username')),
       );
       return;
     }
 
     final userDoc = querySnapshot.docs.first;
+    final receiverId = userDoc.id;
+
+    if (await areAlreadyFriends(_currentUser, receiverId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You are already friends with this user')),
+      );
+      return;
+    }
+
+    // Check if a friend request has already been sent or received
+    final friendRequestCheckSent = await _firestore
+        .collection('friend_requests')
+        .where('senderId', isEqualTo: _currentUser)
+        .where('receiverId', isEqualTo: receiverId)
+        .get();
+
+    final friendRequestCheckReceived = await _firestore
+        .collection('friend_requests')
+        .where('receiverId', isEqualTo: _currentUser)
+        .where('senderId', isEqualTo: receiverId)
+        .get();
+
+    if (friendRequestCheckSent.docs.isNotEmpty) {
+      final requestStatus = friendRequestCheckSent.docs.first['status'];
+      if (requestStatus == 'pending') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Friend request already sent!')),
+        );
+        return;
+      }
+    }
+
+    if (friendRequestCheckReceived.docs.isNotEmpty) {
+      final requestStatus = friendRequestCheckReceived.docs.first['status'];
+      if (requestStatus == 'pending') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('You have a pending friend request from this user')),
+        );
+        return;
+      }
+    }
 
     await _firestore.collection('friend_requests').add({
       'senderId': _currentUser,
-      'receiverId': userDoc.id,
+      'receiverId': receiverId,
       'status': 'pending',
     });
 
@@ -2752,10 +2833,10 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
           child: Column(
             children: <Widget>[
               TextFormField(
-                decoration: InputDecoration(labelText: 'Enter email'),
+                decoration: InputDecoration(labelText: 'Enter username'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an email';
+                    return 'Please enter a username';
                   }
                   return null;
                 },
@@ -2854,6 +2935,283 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class FriendRequestsScreen extends StatefulWidget {
+  @override
+  _FriendRequestsScreenState createState() => _FriendRequestsScreenState();
+}
+
+class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _currentUser = FirebaseAuth.instance.currentUser!.uid;
+
+  Future<List<Map<String, dynamic>>> getFriendRequests() async {
+    final querySnapshot = await _firestore
+        .collection('friend_requests')
+        .where('receiverId', isEqualTo: _currentUser)
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    final requests = querySnapshot.docs;
+
+    // Fetch each sender's username and add it to the request data
+    return Future.wait(requests.map((request) async {
+      final senderId = request.data()['senderId'];
+      final senderDoc =
+          await _firestore.collection('users').doc(senderId).get();
+
+      return {
+        ...request.data(),
+        'senderUsername': senderDoc.data()?['username'],
+        'requestId': request.id,
+      };
+    }).toList());
+  }
+
+  // Function to accept friend request
+  Future<void> acceptFriendRequest(String senderId, String requestId) async {
+    await _firestore.collection('friend_requests').doc(requestId).delete();
+
+    // Add a document to 'friends' collection
+    await _firestore.collection('friends').doc().set({
+      'user1': _currentUser,
+      'user2': senderId,
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Friend request accepted!')),
+    );
+
+    // This will rebuild the widget and refresh the list
+    setState(() {});
+  }
+
+  // Function to decline friend request
+  Future<void> declineFriendRequest(String requestId) async {
+    await _firestore.collection('friend_requests').doc(requestId).delete();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Friend request declined!')),
+    );
+
+    // This will rebuild the widget and refresh the list
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double ScreenSize = MediaQuery.of(context).size.width;
+    double ScreenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Friend Requests'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: getFriendRequests(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.error != null) {
+              return Center(child: Text('Error fetching friend requests'));
+            }
+
+            if (snapshot.data!.isEmpty) {
+              return Center(child: Text('No friend requests'));
+            }
+
+            return ListView.builder(
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) {
+                final request = snapshot.data![index];
+
+                return ListTile(
+                  title:
+                      Text('Friend request from ${request['senderUsername']}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      TextButton(
+                        child: Text(
+                          'Accept',
+                          selectionColor: Colors.black,
+                        ),
+                        onPressed: () {
+                          acceptFriendRequest(
+                              request['senderId'], request['requestId']);
+                        },
+                      ),
+                      TextButton(
+                        child: Text(
+                          'Decline',
+                          selectionColor: Colors.black,
+                        ),
+                        onPressed: () {
+                          declineFriendRequest(request['requestId']);
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
+        child: FractionallySizedBox(
+          widthFactor: 1.2, // Take up the full available width
+          child: Container(
+            color: Colors.grey[300],
+            height: ScreenHeight * .08,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Chat.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => ChatListPage(
+                                chats: [chats[0], chats[1]],
+                              )),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Network.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => HomePage()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Home.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => education_Page()),
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Read.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: ImageIcon(
+                    AssetImage('assets/images/Icon_Map.png'),
+                    color: null,
+                  ),
+                  iconSize: ScreenSize * .1,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FriendListScreen extends StatefulWidget {
+  @override
+  _FriendListScreenState createState() => _FriendListScreenState();
+}
+
+class _FriendListScreenState extends State<FriendListScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _currentUser = FirebaseAuth.instance.currentUser!.uid;
+
+  Future<List<DocumentSnapshot>> fetchFriends() async {
+    List<DocumentSnapshot> friends = [];
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('friends')
+        .where('user1', isEqualTo: _currentUser)
+        .get();
+
+    for (var doc in querySnapshot.docs) {
+      QuerySnapshot reverseCheck = await _firestore
+          .collection('friends')
+          .where('user1', isEqualTo: doc['user2'])
+          .where('user2', isEqualTo: _currentUser)
+          .get();
+
+      if (reverseCheck.docs.isNotEmpty) {
+        DocumentSnapshot friendDoc =
+            await _firestore.collection('users').doc(doc['user2']).get();
+        friends.add(friendDoc);
+      }
+    }
+
+    return friends;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Friends List'),
+        backgroundColor: Colors.teal,
+      ),
+      body: FutureBuilder<List<DocumentSnapshot>>(
+        future: fetchFriends(),
+        builder: (BuildContext context,
+            AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(snapshot.data![index][
+                    'username']), // replace 'username' with the field name in your users collection
+              );
+            },
+          );
+        },
       ),
     );
   }
