@@ -2026,6 +2026,23 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  void _deleteAccount() async {
+    final user = _auth.currentUser;
+
+    await _firestore.collection('users').doc(user!.uid).delete();
+
+    user.delete().then((_) {
+      print("User successfully deleted");
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => getStarted(),
+        ),
+      );
+    }).catchError((error) {
+      print("Failed to delete user: $error");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenSize = MediaQuery.of(context).size.width;
@@ -2168,6 +2185,14 @@ class _AccountPageState extends State<AccountPage> {
                   style: ButtonStyle(
                     backgroundColor:
                         MaterialStateProperty.all<Color>(Colors.teal),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _deleteAccount,
+                  child: Text('Delete Account'),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.red),
                   ),
                 ),
               ],
