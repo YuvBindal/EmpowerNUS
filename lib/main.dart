@@ -16,6 +16,16 @@ import 'ContactList.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'angelContact.dart';
+import 'homePage.dart';
+import 'accountPage.dart';
+import 'geolocator.dart';
+import 'permissons.dart';
+import 'permhandler.dart';
+import 'videoCapture.dart';
+
+//add a cross, add it to display on angelContacts when delete contacts is selected,
+//add a confirmation, when delete it is hit run a searching algo
+
 
 
 void main() async {
@@ -29,15 +39,21 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: angelForm(),
+    home: HomePage(),
   ));
 }
+
 
 
 /*
 Logic: after message returns if its not a match just tell them to take a picture again.
 If it is a match. Add contents of angelDetails to angels. Pass those details of contact first and last name + city/state/country and create an angel
 contact side by side.
+
+//notes to self:
+implement delete logic for angel list
+try using a listview builder to make code more robust
+host server endpoint on AWS or something for testing of others.
 
  */
 
@@ -166,6 +182,9 @@ class _ScannerState extends State<Scanner> {
   }
 
   Future<void> uploadVideoToFirebase(String videoPath) async {
+    setState(() {
+      _isLoadingReport = true;
+    });
     try {
       final fileName = DateTime.now().millisecondsSinceEpoch.toString();
       final destination = 'videos/$fileName.mp4';
@@ -179,7 +198,12 @@ class _ScannerState extends State<Scanner> {
       await uploadTask.whenComplete(() {});
       final String downloadURL = await taskSnapshot.ref.getDownloadURL();
 
+      final url = Uri.http('10.0.2.2:5000', '/reportGenVideos');
+      final response = await http.post(url, headers: {'Content-Type': 'application/json'}, body: json.encode({'Raw_Video': downloadURL}));
+      print('Response status: ${response.statusCode}');
+
       print('Video uploaded. Download URL: $downloadURL');
+      addFrame();
     } catch (e) {
       print('Error uploading video to Firebase Storage: $e');
     }
@@ -204,6 +228,7 @@ class _ScannerState extends State<Scanner> {
       }
     }
   }
+
 
   void stopRecording() async {
     print('reached stopping');
@@ -352,7 +377,14 @@ class _ScannerState extends State<Scanner> {
             children: [
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                ChatBot())
+                    );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Chat.png'),
                     color: null,
@@ -362,7 +394,9 @@ class _ScannerState extends State<Scanner> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    //friend chat goes here
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Network.png'),
                     color: null,
@@ -372,7 +406,14 @@ class _ScannerState extends State<Scanner> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                HomePage())
+                    );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Home.png'),
                     color: null,
@@ -382,7 +423,9 @@ class _ScannerState extends State<Scanner> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    //education page goes here
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Read.png'),
                     color: null,
@@ -679,7 +722,21 @@ class _angelListState extends State<angelList> {
                         height: ScreenHeight * .06,
                         width: ScreenWidth * .46,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (showDelete){
+                              setState(() {
+                                showDelete = false;
+                                print(showDelete);
+                              });
+                            } else {
+                              setState(() {
+                                showDelete = true;
+                                print(showDelete);
+                              });
+                            }
+
+
+                          },
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius:
@@ -721,8 +778,8 @@ class _angelListState extends State<angelList> {
                       width: ScreenWidth,
                       color: Colors.white,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: angelContacts,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: angelContacts,
                       ),
                     ),
                   ),
@@ -763,7 +820,14 @@ class _angelListState extends State<angelList> {
               ),
               Expanded(
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                HomePage())
+                    );
+                  },
                   icon: ImageIcon(
                     AssetImage('assets/images/Icon_Home.png'),
                     color: null,
