@@ -9,6 +9,7 @@ import 'package:camerascan/homePage.dart';
 import 'package:fake_async/fake_async.dart';
 
 void main() {
+  //passes
   testWidgets('HomePage should initialize without errors', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(MaterialApp(home: HomePage()));
@@ -17,21 +18,39 @@ void main() {
     expect(find.byType(HomePage), findsOneWidget);
   });
 
+
+  //passes
   testWidgets('Drawer shows correct items', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
     await tester.pumpWidget(MaterialApp(home: HomePage()));
 
-    // Open the drawer
-    await tester.tap(find.byIcon(Icons.menu));
+    // Wait for all animations and async operations to complete.
     await tester.pumpAndSettle();
 
-    // Verify the drawer items
-    //expect(find.text('Deploy Report'), findsOneWidget); need to add these in
+    // Find the icon in the drawer and tap on it.
+    final icon = find.byWidgetPredicate((widget) {
+      // Check if the widget is an IconButton with a custom AssetImage icon.
+      if (widget is IconButton && widget.icon is ImageIcon) {
+        final imageIcon = widget.icon as ImageIcon;
+        return imageIcon.image == AssetImage('assets/images/Icon_TabBar.png');
+      }
+      return false;
+    });
+
+    expect(icon, findsOneWidget);
+    await tester.tap(icon);
+    await tester.pumpAndSettle();
+
+    // Add more test assertions for the expected behavior of the drawer.
+
+    // For example, you can check if the drawer items are displayed correctly.
     expect(find.text('Angel List'), findsOneWidget);
     expect(find.text('Permissions'), findsOneWidget);
-    //expect(find.text('Log out'), findsOneWidget); need to add these in
-    //expect(find.text('Manage Account'), findsOneWidget);
-  });
+    expect(find.text('Manage Account'), findsOneWidget);
 
+    // Add more assertions for other drawer items.
+
+  });
 
   testWidgets('Tapping on the circular image toggles panic mode', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(home: HomePage()));
