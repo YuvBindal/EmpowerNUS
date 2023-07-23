@@ -50,20 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBhSWLJ_ahrzGZ2H3rsbRFZx79AHd7tnn8',
-    appId: '1:335077763653:android:233c3c1d180df6d86b112c',
-    messagingSenderId: '335077763653',
-    projectId: 'test-project-123842',
-    storageBucket: 'test-project-123842.appspot.com',
+    apiKey: 'AIzaSyCw8H1kKg36XPGkwbH2fb9fHKFbmm4HtHI',
+    appId: '1:670274072557:android:b0fbd298d130e27fab81e4',
+    messagingSenderId: '670274072557',
+    projectId: 'empowernus2',
+    storageBucket: 'empowernus2.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBsbT9BE8C7EClibAw9dHTt8VEhkQfLSwE',
-    appId: '1:335077763653:ios:c2a1df2118ab1ce26b112c',
-    messagingSenderId: '335077763653',
-    projectId: 'test-project-123842',
-    storageBucket: 'test-project-123842.appspot.com',
-    iosClientId: '335077763653-4ofnrpo3pebsdrr99cfkq104n9dun4j6.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCkFjPpC88lFjzuNTMOUW7XLR3rd37tkbU',
+    appId: '1:670274072557:ios:01d6f101b110871dab81e4',
+    messagingSenderId: '670274072557',
+    projectId: 'empowernus2',
+    storageBucket: 'empowernus2.appspot.com',
+    iosClientId: '670274072557-6qeu13k0rfkqhuvc23unt29ni3cjjktp.apps.googleusercontent.com',
     iosBundleId: 'com.example.plzwork',
   );
 }
