@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 class ReportFrame extends StatefulWidget {
-  const ReportFrame({super.key});
+  final Future<String> frameUrl;
+  const ReportFrame({Key? key, required this.frameUrl}) : super(key: key);
 
   @override
   State<ReportFrame> createState() => _ReportFrameState();
 }
 
 class _ReportFrameState extends State<ReportFrame> {
+  void launchURL(Uri url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      print('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -26,10 +37,21 @@ class _ReportFrameState extends State<ReportFrame> {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
+                onTap: () async {
+                  String frameUrl = await widget.frameUrl;
+                  final Uri _url = Uri.parse(frameUrl);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PDFViewerScreen(pdfUrl: frameUrl),
+                    ),
+                  );
+
+
 
                   //open loaded police report
                   print('image being clicked');
+                  print(frameUrl);
                 },
                 child: Center(
                   child: Image(
@@ -46,5 +68,23 @@ class _ReportFrameState extends State<ReportFrame> {
 
           ),
         );
+  }
+}
+
+class PDFViewerScreen extends StatelessWidget {
+  final String pdfUrl;
+
+  const PDFViewerScreen({Key? key, required this.pdfUrl}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('PDF Viewer'),
+      ),
+      body: PDFView(
+        filePath: pdfUrl,
+      ),
+    );
   }
 }

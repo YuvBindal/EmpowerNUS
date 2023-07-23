@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:camerascan/education.dart';
 import 'package:flutter/material.dart';
 import 'accountPage.dart';
+import 'chatlistpage.dart';
 import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -129,6 +130,7 @@ class HomePageState extends State<HomePage> {
     super.initState();
     _loadImageUrl();
     _startTimer();
+
 
   }
 
@@ -259,6 +261,11 @@ class HomePageState extends State<HomePage> {
                   title: Text('Log out'),
                   onTap: () {
                     //login page here
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => LoginPage()),
+                    );
                   },
                 ),
                 ListTile(
@@ -518,7 +525,14 @@ class HomePageState extends State<HomePage> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) =>
+                                        ChatBot()),
+                              );
+                            },
                             icon: ImageIcon(
                               AssetImage('assets/images/Icon_Chat.png'),
                               color: null,
@@ -528,6 +542,16 @@ class HomePageState extends State<HomePage> {
                           IconButton(
                             onPressed: () {
                               //chatlistpage here
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) =>
+                                        ChatListPage(
+                                          chats: [chats[0], chats[1]],
+                                        )
+                                ),
+                              );
                             },
                             icon: ImageIcon(
                               AssetImage('assets/images/Icon_Network.png'),

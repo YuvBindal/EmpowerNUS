@@ -1,4 +1,6 @@
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
@@ -27,7 +29,8 @@ import 'package:flutter_driver/driver_extension.dart';
 //add a cross, add it to display on angelContacts when delete contacts is selected,
 //add a confirmation, when delete it is hit run a searching algo
 
-
+final FirebaseAuth _auth = FirebaseAuth.instance;
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 void main() async {
   enableFlutterDriverExtension();
@@ -41,10 +44,654 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: HomePage(),
+    home: LoginPage(),
   ));
 }
 
+class getStarted extends StatefulWidget {
+  const getStarted({Key? key}) : super(key: key);
+
+  @override
+  State<getStarted> createState() => _getStartedState();
+}
+
+class _getStartedState extends State<getStarted> {
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double ScreenFont = MediaQuery.of(context).textScaleFactor;
+
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Image_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Column(
+          children: <Widget>[
+            SizedBox(height: screenHeight * .05),
+            Center(
+              child: Container(
+                width: screenWidth * .8,
+                height: screenHeight * .15,
+                child: Image.asset('assets/images/Icon_Logo.png'),
+              ),
+            ),
+            SizedBox(height: screenHeight * .05),
+            Center(
+              child: Container(
+                width: screenWidth * .8,
+                height: screenHeight * .30,
+                child: Image.asset('assets/images/Icon_GetStartedImage.png'),
+              ),
+            ),
+            SizedBox(height: screenHeight * .05),
+            Center(
+              child: Container(
+                width: screenWidth * .8,
+                height: screenHeight * .25,
+                child: Image.asset('assets/images/Icon_GetStartedText.png'),
+              ),
+            ),
+            Center(
+              child: Container(
+                width: screenWidth * .8,
+                height: screenHeight * .08,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                    Colors.teal[100], // Set the background color
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => RegisterPage()));
+                  },
+                  child: Text(
+                    'Get Started',
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: ScreenFont * 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: ScreenFont * 1.25,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final TextEditingController _usernameController = TextEditingController();
+//  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+  TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+//    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _registerUser() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      print('The passwords do not match.');
+      return;
+    }
+
+    // Check if username is already taken
+    final usernameSnapshot = await _firestore
+        .collection('users')
+        .where('username', isEqualTo: _usernameController.text)
+        .get();
+
+    if (usernameSnapshot.docs.length > 0) {
+      print('Username already exists. Please choose another username.');
+      return;
+    }
+
+    // If username is not taken, continue with registration
+    try {
+      UserCredential userCredential =
+      await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // If registration is successful, add user data to Firestore
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'username': _usernameController.text,
+          'email': _emailController.text,
+        });
+
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => LoginPage()));
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        print('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        print('The account already exists for that email.');
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenFont = MediaQuery.of(context).textScaleFactor;
+
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Icon_Background.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              SizedBox(height: screenHeight * .05),
+              Center(
+                child: Container(
+                  width: screenWidth * .8,
+                  height: screenHeight * .15,
+                  child: Image.asset('assets/images/Icon_Logo.png'),
+                ),
+              ),
+              SizedBox(height: screenHeight * .05),
+              Center(
+                child: Container(
+                  width: screenWidth * .8,
+                  height: screenHeight * .20,
+                  child: Image.asset('assets/images/Icon_RegisterText.png'),
+                ),
+              ),
+              Container(
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: TextField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your username',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'Open Sans',
+                    fontSize: screenFont * 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: screenFont,
+                  ),
+                  textAlign: TextAlign.justify,
+                  cursorColor: Colors.black38,
+                  maxLines: 1,
+                ),
+              ),
+              Container(
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your email',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'Open Sans',
+                    fontSize: screenFont * 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: screenFont,
+                  ),
+                  textAlign: TextAlign.justify,
+                  cursorColor: Colors.black38,
+                  maxLines: 1,
+                ),
+              ),
+              Container(
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  maxLength: 12,
+                  decoration: InputDecoration(
+                    hintText: 'Enter password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'Open Sans',
+                    fontSize: screenFont * 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: screenFont,
+                  ),
+                  textAlign: TextAlign.justify,
+                  cursorColor: Colors.black38,
+                  maxLines: 1,
+                ),
+              ),
+              Container(
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  maxLength: 12,
+                  decoration: InputDecoration(
+                    hintText: 'Confirm password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'Open Sans',
+                    fontSize: screenFont * 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: screenFont,
+                  ),
+                  textAlign: TextAlign.justify,
+                  cursorColor: Colors.black38,
+                  maxLines: 1,
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: screenWidth * .8,
+                  height: screenHeight * .08,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal[100],
+                    ),
+                    onPressed: () {
+                      _registerUser();
+                    },
+                    child: Text(
+                      'Register',
+                      style: TextStyle(
+                        fontFamily: 'Open Sans',
+                        fontSize: screenFont * 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: screenFont * 1.25,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      'Have an account already?',
+                      style: TextStyle(
+                        fontFamily: 'Open Sans',
+                        fontSize: screenFont * 14,
+                        letterSpacing: screenFont,
+                        color: Colors.black,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => LoginPage()));
+                      },
+                      child: Text('Sign in'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      // Handle the error in your app here.
+      print(e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenFont = MediaQuery.of(context).textScaleFactor;
+
+    return Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Icon_Background.png'),
+              fit: BoxFit.fill,
+            ),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                SizedBox(height: screenHeight * .05),
+                Center(
+                  child: Container(
+                    width: screenWidth * .8,
+                    height: screenHeight * .15,
+                    child: Image.asset('assets/images/Icon_Logo.png'),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: screenWidth * .8,
+                    height: screenHeight * .05,
+                    child: Image.asset('assets/images/Icon_LoginText.png'),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: screenWidth * 1,
+                    height: screenHeight * .35,
+                    child: Image.asset('assets/images/Icon_LoginImage.png'),
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your email',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: screenFont * 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: screenFont,
+                    ),
+                    textAlign: TextAlign.justify,
+                    cursorColor: Colors.black38,
+                    maxLines: 1,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    maxLength: 12,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontFamily: 'Open Sans',
+                      fontSize: screenFont * 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: screenFont,
+                    ),
+                    textAlign: TextAlign.justify,
+                    cursorColor: Colors.black38,
+                    maxLines: 1,
+                  ),
+                ),
+                Container(
+                  width: screenWidth * 1,
+                  height: screenHeight * .05,
+                  child: Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => ResetPasswordPage()));
+                      },
+                      child: Text(
+                        'Forgot Password',
+                        style: TextStyle(
+                          fontFamily: 'Open Sans',
+                          fontSize: screenFont * 16,
+                          decoration: TextDecoration.underline,
+                          letterSpacing: screenFont,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: screenWidth * .8,
+                    height: screenHeight * .08,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                        Colors.teal[100], // Set the background color
+                      ),
+                      onPressed: _login,
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          fontFamily: 'Open Sans',
+                          fontSize: screenFont * 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: screenFont * 1.25,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: screenHeight * .07,
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          'Don\'t have an account?',
+                          style: TextStyle(
+                            fontFamily: 'Open Sans',
+                            fontSize: screenFont * 14,
+                            letterSpacing: screenFont,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => RegisterPage()));
+                          },
+                          child: Text('Sign up'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
+  }
+}
+
+class ResetPasswordPage extends StatefulWidget {
+  @override
+  _ResetPasswordPageState createState() => _ResetPasswordPageState();
+}
+
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  final _auth = FirebaseAuth.instance;
+  final _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password reset email sent'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error occurred while sending password reset email'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[900],
+      appBar: AppBar(
+        title: Text('Reset Password'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(color: Colors.teal),
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  if (_emailController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please enter an email'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } else {
+                    _resetPassword(_emailController.text);
+                  }
+                },
+                child: Text('Reset Password'),
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.teal, // background
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 
 /*
@@ -61,6 +708,7 @@ host server endpoint on AWS or something for testing of others.
 
 List<angelContact> angelContacts = [];
 List<angelDetails> angels = [];
+List<String> pdfReports = [];
 
 
 class Scanner extends StatefulWidget {
@@ -77,6 +725,8 @@ class ScannerState extends State<Scanner> {
   bool _picStorage = false;
   bool _isLoadingReport = false;
   List<ReportFrame> reportFrames = [];
+  late Future<String> currentUrl;
+  int index= 0;
 
   @override
   void initState() {
@@ -89,11 +739,50 @@ class ScannerState extends State<Scanner> {
     controller!.dispose();
     super.dispose();
   }
-  void addFrame() {
+  void addFrame(Future<String> policeUrl) {
     setState(() {
-      reportFrames.add(ReportFrame());
+      reportFrames.add(ReportFrame(frameUrl: policeUrl));
       _isLoadingReport = false;
     });
+  }
+  Future<String> fetchReportUrl() async {
+    final url = Uri.http('10.0.2.2:5000', '/reportGen');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      setState(() {
+        pdfReports.add(jsonData['photo_reports'][0].toString());
+        for (int i =0; i< pdfReports.length; i++) {
+          print(pdfReports[i]);
+        }
+      });
+      return jsonData['photo_reports'][0].toString();
+      //after verifications push angelDetails to angels list, store to firebase. reset angelDetails
+    } else {
+      return 'There was an error';
+
+    }
+  }
+
+  Future<String> fetchVideoUrl() async {
+    final url = Uri.http('10.0.2.2:5000', '/reportGenVideos');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      setState(() {
+        pdfReports.add(jsonData['video_reports'][0].toString());
+        for (int i =0; i< pdfReports.length; i++) {
+          print(pdfReports[i]);
+        }
+      });
+      return jsonData['video_reports'][0].toString();
+      //after verifications push angelDetails to angels list, store to firebase. reset angelDetails
+    } else {
+      return 'There was an error';
+
+    }
   }
 
   Future<void> initializeCamera() async {
@@ -178,9 +867,11 @@ class ScannerState extends State<Scanner> {
 
 
       print('Image uploaded. Download URL: $downloadURL');
+      setState(() {
+        currentUrl = fetchReportUrl();
+      });
 
-
-      addFrame();
+      addFrame(currentUrl);
     } catch (e) {
       print('Error uploading image to Firebase Storage: $e');
     }
@@ -208,7 +899,10 @@ class ScannerState extends State<Scanner> {
       print('Response status: ${response.statusCode}');
 
       print('Video uploaded. Download URL: $downloadURL');
-      addFrame();
+      setState(() {
+        currentUrl = fetchVideoUrl();
+      });
+      addFrame(currentUrl);
     } catch (e) {
       print('Error uploading video to Firebase Storage: $e');
     }
