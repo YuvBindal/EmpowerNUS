@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:camerascan/education.dart';
 import 'package:flutter/material.dart';
 import 'accountPage.dart';
 import 'main.dart';
@@ -12,7 +13,7 @@ import 'package:geolocator/geolocator.dart';
 import 'permissons.dart';
 import 'videoCapture.dart';
 import 'package:meta/meta.dart'; // Import the meta package
-
+import 'report.dart';
 /*
 PANIC BUTTON FEATURES:
 UI changes: background becomes tinted red, mode gets turned on + noise alarm  (work later)
@@ -28,15 +29,18 @@ generate a report and save it to panic button  history
 
 
 class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
 
   bool _panicModeOn = false;
+
+  bool get panicModeOn => _panicModeOn; //Getter Method
 
   Color _backgroundColor = Color.fromRGBO(230, 0, 0, .3); // Initial background color
   Timer? _timer;
@@ -206,6 +210,12 @@ class _HomePageState extends State<HomePage> {
                   onTap: () {
                     // TODO: Handle item 1 press
                     //report page here
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                ReportPage())
+                    );
                   },
                 ),
                 ListTile(
@@ -484,10 +494,6 @@ class _HomePageState extends State<HomePage> {
                         }
 
 
-
-
-
-
                       },
                       child: ClipOval(
                         child: Image(
@@ -547,6 +553,11 @@ class _HomePageState extends State<HomePage> {
                           IconButton(
                             onPressed: () {
                               //education page here
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) => education_Page()),
+                              );
                             },
                             icon: ImageIcon(
                               AssetImage('assets/images/Icon_Read.png'),

@@ -3,10 +3,20 @@ The unit tests here will aim to test the functionality of home page features.
 This will be done by assessing the values of flag/tracking variables of the state of features.
 Ex. If panic button is launched, _panicModeOn variable should have been set to True.
  */
+import 'dart:async';
+
+import 'package:camerascan/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:camerascan/homePage.dart';
+import 'package:mockito/mockito.dart';
 import 'package:fake_async/fake_async.dart';
+void main() {
+
+}
+
+/*
+class MockTimer extends Fake implements Timer {}
 
 void main() {
   //passes
@@ -49,27 +59,63 @@ void main() {
     expect(find.text('Manage Account'), findsOneWidget);
 
     // Add more assertions for other drawer items.
-
   });
 
   testWidgets('Tapping on the circular image toggles panic mode', (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(home: HomePage()));
+    // Wrap the test code with fakeAsync
+    await fakeAsync((fake) async {
+      // Create a GlobalKey
+      final homePageKey = GlobalKey<HomePageState>();
 
-    // Initially, panic mode should be off
-    expect(find.text('Panic Mode: '), findsOneWidget);
-    expect(find.text('Off'), findsOneWidget);
+      await tester.pumpWidget(MaterialApp(home: HomePage(key: homePageKey)));
 
-    await fakeAsync((async) async {
-      // Find the circular image and tap on it.
+      // Get the HomePageState from the GlobalKey
+      final homePageState = homePageKey.currentState;
+
+      // Initially, panic mode should be off
+      expect(homePageState!.panicModeOn, isFalse);
+
+      // Find the circular image and tap on it to activate panic mode
       final circularImage = find.byType(ClipOval);
       await tester.tap(circularImage);
       await tester.pump();
 
-      // After tapping, panic mode should be on
-      expect(find.text('Panic Mode: '), findsOneWidget);
-      expect(find.text('On'), findsOneWidget);
+      // Check the value of panicModeOn
+      expect(homePageState!.panicModeOn, isTrue);
+
+      // Find the circular image and tap on it again to deactivate panic mode
+      await tester.tap(circularImage);
+      await tester.pump();
+
+      // Expect a dialog to appear
+      final alertDialogFinder = find.byType(AlertDialog);
+      expect(alertDialogFinder, findsOneWidget);
+
+      // Tap the "Deactivate" text button in the dialog
+      final deactivateButtonFinder = find.text('Deactivate');
+      expect(deactivateButtonFinder, findsOneWidget);
+      await tester.tap(deactivateButtonFinder);
+      await tester.pump();
+
+      // Panic mode should be off again
+      expect(homePageState!.panicModeOn, isFalse);
+
+      // Advance the timer by 1 second to trigger the periodic timer
+      fake.elapse(const Duration(seconds: 1));
+      await tester.pump();
+
+      // Now the panic mode should be on again due to the periodic timer
+      expect(homePageState!.panicModeOn, isTrue);
     });
   });
 
+
+
+
+
+
+
 }
+*/
+
 

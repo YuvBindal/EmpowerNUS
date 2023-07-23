@@ -22,6 +22,7 @@ import 'geolocator.dart';
 import 'permissons.dart';
 import 'permhandler.dart';
 import 'videoCapture.dart';
+import 'package:flutter_driver/driver_extension.dart';
 
 //add a cross, add it to display on angelContacts when delete contacts is selected,
 //add a confirmation, when delete it is hit run a searching algo
@@ -29,6 +30,7 @@ import 'videoCapture.dart';
 
 
 void main() async {
+  enableFlutterDriverExtension();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   print(message);
@@ -63,12 +65,13 @@ List<angelDetails> angels = [];
 
 class Scanner extends StatefulWidget {
   @override
-  State<Scanner> createState() => _ScannerState();
+  State<Scanner> createState() => ScannerState();
 }
 
-class _ScannerState extends State<Scanner> {
-  late CameraController controller;
+class ScannerState extends State<Scanner> {
+  late CameraController? controller;
   bool _isCameraInitialized = false;
+  bool get isCameraInitialized => _isCameraInitialized;
   bool _isFrontCamera = false;
   bool _isTakingPicture = false;
   bool _picStorage = false;
@@ -83,7 +86,7 @@ class _ScannerState extends State<Scanner> {
 
   @override
   void dispose() {
-    controller.dispose();
+    controller!.dispose();
     super.dispose();
   }
   void addFrame() {
@@ -93,7 +96,7 @@ class _ScannerState extends State<Scanner> {
     });
   }
 
-  void initializeCamera() async {
+  Future<void> initializeCamera() async {
     final cameras = await availableCameras();
     final camera = _isFrontCamera ? cameras.last : cameras.first;
     controller = CameraController(
@@ -102,7 +105,7 @@ class _ScannerState extends State<Scanner> {
     );
 
     try {
-      await controller.initialize();
+      await controller!.initialize();
       setState(() {
         _isCameraInitialized = true;
       });
@@ -117,7 +120,7 @@ class _ScannerState extends State<Scanner> {
       _isCameraInitialized = false;
     });
 
-    controller.dispose();
+    controller!.dispose();
     await Future.delayed(Duration(milliseconds: 500));
 
     initializeCamera();
@@ -135,7 +138,7 @@ class _ScannerState extends State<Scanner> {
     await Future.delayed(Duration(milliseconds: 500)); //add a little effect
 
     try {
-      final XFile picture = await controller.takePicture();
+      final XFile picture = await controller!.takePicture();
       print('Picture saved at: ${picture.path}');
       uploadImageToFirebase(picture.path); // Call the method to upload the image
 
@@ -175,6 +178,8 @@ class _ScannerState extends State<Scanner> {
 
 
       print('Image uploaded. Download URL: $downloadURL');
+
+
       addFrame();
     } catch (e) {
       print('Error uploading image to Firebase Storage: $e');
@@ -218,7 +223,7 @@ class _ScannerState extends State<Scanner> {
         final String dirPath = '${extDir.path}/Videos/flutter_test';
         await Directory(dirPath).create(recursive: true);
         final String filePath = '$dirPath/${DateTime.now()}.mp4';
-        await controller.startVideoRecording();
+        await controller!.startVideoRecording();
       } catch (e) {
         print('Error starting video recording: $e');
       } finally {
@@ -235,7 +240,7 @@ class _ScannerState extends State<Scanner> {
 
     if (_isTakingPicture) {
       try {
-        final XFile videoFile = await controller.stopVideoRecording();
+        final XFile videoFile = await controller!.stopVideoRecording();
         await uploadVideoToFirebase(videoFile.path);
       } catch (e) {
         print('Error stopping video recording: $e');
@@ -306,8 +311,8 @@ class _ScannerState extends State<Scanner> {
 
               _isCameraInitialized
                   ? AspectRatio(
-                      aspectRatio: controller.value.aspectRatio,
-                      child: CameraPreview(controller),
+                      aspectRatio: controller!.value.aspectRatio,
+                      child: CameraPreview(controller!),
                     )
                   : Center(child: CircularProgressIndicator()),
             ),
