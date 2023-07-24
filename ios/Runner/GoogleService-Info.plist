@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>335077763653-4ofnrpo3pebsdrr99cfkq104n9dun4j6.apps.googleusercontent.com</string>
+	<string>670274072557-6qeu13k0rfkqhuvc23unt29ni3cjjktp.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.335077763653-4ofnrpo3pebsdrr99cfkq104n9dun4j6</string>
+	<string>com.googleusercontent.apps.670274072557-6qeu13k0rfkqhuvc23unt29ni3cjjktp</string>
 	<key>API_KEY</key>
-	<string>AIzaSyBsbT9BE8C7EClibAw9dHTt8VEhkQfLSwE</string>
+	<string>AIzaSyCkFjPpC88lFjzuNTMOUW7XLR3rd37tkbU</string>
 	<key>GCM_SENDER_ID</key>
-	<string>335077763653</string>
+	<string>670274072557</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.example.plzwork</string>
 	<key>PROJECT_ID</key>
-	<string>test-project-123842</string>
+	<string>empowernus2</string>
 	<key>STORAGE_BUCKET</key>
-	<string>test-project-123842.appspot.com</string>
+	<string>empowernus2.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:335077763653:ios:c2a1df2118ab1ce26b112c</string>
+	<string>1:670274072557:ios:01d6f101b110871dab81e4</string>
 </dict>
 </plist>
