@@ -355,7 +355,7 @@ class HomePageState extends State<HomePage> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Welcome back,\nUserName!',
+                      'Welcome back!',
                       style: TextStyle(
                         fontFamily: 'Open Sans',
                         fontSize: 32,

@@ -4,12 +4,17 @@ import 'homePage.dart';
 
 
 class education_Page extends StatefulWidget {
+  const education_Page({Key? key}) : super(key: key);
+
+
   @override
-  State<education_Page> createState() => _education_PageState();
+  State<education_Page> createState() => education_PageState();
 }
 
-class _education_PageState extends State<education_Page> {
+class education_PageState extends State<education_Page> {
   String? _selectedCategory = 'All';
+
+  String? get selectedCategory => _selectedCategory;
 
   Map<String, List<Map<String, String>>> resources = {
     'All': [],
@@ -181,15 +186,38 @@ class _education_PageState extends State<education_Page> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuizPage(
-                category: _selectedCategory!,
-                questions: quizQuestions[_selectedCategory!]!,
+          // Check if there are quiz questions available for the selected category
+          List<QuizQuestion>? categoryQuizQuestions = quizQuestions[_selectedCategory!];
+          if (categoryQuizQuestions != null && categoryQuizQuestions.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuizPage(
+                  category: _selectedCategory!,
+                  questions: categoryQuizQuestions,
+                ),
               ),
-            ),
-          );
+            );
+          } else {
+            // Handle the case where no quiz questions are available for the selected category
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('No Quiz Questions Available'),
+                  content: Text('Sorry, there are no quiz questions available for this category.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         },
         child: Icon(Icons.quiz_rounded),
         backgroundColor: Colors.teal,

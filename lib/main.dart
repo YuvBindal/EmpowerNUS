@@ -44,7 +44,7 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: LoginPage(),
+    home: angelList(),
   ));
 }
 
@@ -1332,13 +1332,14 @@ class _ChatBotState extends State<ChatBot> {
 }
 
 class angelList extends StatefulWidget {
-  const angelList({super.key});
+  const angelList({Key? key}) : super(key: key);
 
   @override
-  State<angelList> createState() => _angelListState();
+  State<angelList> createState() => angelListState();
 }
 
-class _angelListState extends State<angelList> {
+class angelListState extends State<angelList> {
+  final addContactButtonKey = GlobalKey();
 
 
 
@@ -1367,108 +1368,113 @@ class _angelListState extends State<angelList> {
             Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget> [
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(0, ScreenHeight *.05, 0, ScreenHeight *.05),
-                      child: Container(
-                        height: ScreenHeight * .06,
-                        width: ScreenWidth * .42,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                builder: (BuildContext context) =>
-                                angelForm())
-                            );
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget> [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(0, ScreenHeight *.05, 0, ScreenHeight *.05),
+                        child: Container(
+                          height: ScreenHeight * .06,
+                          width: ScreenWidth * .42,
+                          child: ElevatedButton(
+                            key: Key('addContactButton'), // Assign the GlobalKey to the button.
 
-                          },
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(ScreenWidth * .02),
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                  angelForm())
+                              );
+
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(ScreenWidth * .02),
+                              ),
+                              backgroundColor: Colors.lightGreen[300],
                             ),
-                            backgroundColor: Colors.lightGreen[300],
-                          ),
-                          child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-                            children: [
-                              Image(
-                                width: ScreenWidth * .05,
-                                height: ScreenHeight * .04,
-                                image: AssetImage(
-                                    'assets/images/icon_contact.png'),
-                              ),
-                              Text(
-                                'Add Contact',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: ScreenWidth * .035,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.center,
+                              children: [
+                                Image(
+                                  width: ScreenWidth * .05,
+                                  height: ScreenHeight * .04,
+                                  image: AssetImage(
+                                      'assets/images/icon_contact.png'),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  'Add',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: ScreenWidth * .035,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(0, ScreenHeight *.05, 0, ScreenHeight *.05),
-                      child: Container(
-                        height: ScreenHeight * .06,
-                        width: ScreenWidth * .46,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (showDelete){
-                              setState(() {
-                                showDelete = false;
-                                print(showDelete);
-                              });
-                            } else {
-                              setState(() {
-                                showDelete = true;
-                                print(showDelete);
-                              });
-                            }
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(0, ScreenHeight *.05, 0, ScreenHeight *.05),
+                        child: Container(
+                          height: ScreenHeight * .06,
+                          width: ScreenWidth * .46,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (showDelete){
+                                setState(() {
+                                  showDelete = false;
+                                  print(showDelete);
+                                });
+                              } else {
+                                setState(() {
+                                  showDelete = true;
+                                  print(showDelete);
+                                });
+                              }
 
 
-                          },
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(ScreenWidth * .02),
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(ScreenWidth * .02),
+                              ),
+                              backgroundColor: Colors.red[300],
                             ),
-                            backgroundColor: Colors.red[300],
-                          ),
-                          child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-                            children: [
-                              Image(
-                                width: ScreenWidth * .05,
-                                height: ScreenHeight * .04,
-                                image: AssetImage(
-                                    'assets/images/icon_contact.png'),
-                              ),
-                              Text(
-                                'Delete Contact',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: ScreenWidth * .035,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.center,
+                              children: [
+                                Image(
+                                  width: ScreenWidth * .05,
+                                  height: ScreenHeight * .04,
+                                  image: AssetImage(
+                                      'assets/images/icon_contact.png'),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  'Delete',
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: ScreenWidth * .035,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
 
-                  ],
+                    ],
+                  ),
                 ),
 
                 Expanded(

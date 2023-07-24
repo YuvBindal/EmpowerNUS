@@ -11,11 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:camerascan/homePage.dart';
 import 'package:mockito/mockito.dart';
 import 'package:fake_async/fake_async.dart';
-void main() {
 
-}
 
-/*
 class MockTimer extends Fake implements Timer {}
 
 void main() {
@@ -60,6 +57,7 @@ void main() {
 
     // Add more assertions for other drawer items.
   });
+
 
   testWidgets('Tapping on the circular image toggles panic mode', (WidgetTester tester) async {
     // Wrap the test code with fakeAsync
@@ -110,12 +108,7 @@ void main() {
   });
 
 
-
-
-
-
-
 }
-*/
+
 
 
