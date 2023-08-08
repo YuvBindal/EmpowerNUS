@@ -44,7 +44,7 @@ void main() async {
       primarySwatch: Colors.green,
       useMaterial3: true,
     ),
-    home: angelList(),
+    home: HomePage(),
   ));
 }
 
