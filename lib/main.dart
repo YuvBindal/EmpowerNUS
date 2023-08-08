@@ -2270,11 +2270,13 @@ class _AccountPageState extends State<AccountPage> {
 
     if (image != null) {
       _image = File(image.path);
-      await _uploadImageToFirebase(_image!);
+      String userId = FirebaseAuth.instance.currentUser!.uid;
+
+      await _uploadImageToFirebase(_image!, userId);
     }
   }
 
-  Future<void> _uploadImageToFirebase(File image) async {
+  Future<void> _uploadImageToFirebase(File image, String userId) async {
     try {
       int randomNumber = DateTime.now().millisecondsSinceEpoch;
       String imageLocation = 'images/image$randomNumber.jpg';
@@ -2282,8 +2284,10 @@ class _AccountPageState extends State<AccountPage> {
       String downloadUrl =
           await FirebaseStorage.instance.ref(imageLocation).getDownloadURL();
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('bearImageUrl', downloadUrl);
+      // Store the image URL in Firestore Database associated with user's account.
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'imageUrl': downloadUrl,
+      });
 
       setState(() {});
     } catch (e) {
@@ -2573,9 +2577,7 @@ class ChatListPage extends StatelessWidget {
     double ScreenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: // AppBar in ChatListPage:
-
-          AppBar(
+      appBar: AppBar(
         title: Text('Chats'),
         backgroundColor: Colors.teal,
         actions: <Widget>[
@@ -2583,7 +2585,6 @@ class ChatListPage extends StatelessWidget {
             icon: Icon(Icons.add_comment),
             tooltip: 'New Message',
             onPressed: () {
-              // Navigate to the NewMessageScreen1 when this button is tapped
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => NewMessageScreen()),
@@ -2594,7 +2595,6 @@ class ChatListPage extends StatelessWidget {
             icon: Icon(Icons.person_search),
             tooltip: 'Add Friends',
             onPressed: () {
-              // Navigate to the AddFriendsScreen when this button is tapped
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AddFriendsScreen()),
@@ -2605,7 +2605,6 @@ class ChatListPage extends StatelessWidget {
             icon: Icon(Icons.person_add),
             tooltip: 'Friend Requests',
             onPressed: () {
-              // Navigate to the AddFriendsScreen when this button is tapped
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => FriendRequestsScreen()),
@@ -2616,7 +2615,6 @@ class ChatListPage extends StatelessWidget {
             icon: Icon(Icons.people_alt),
             tooltip: 'Friend Requests',
             onPressed: () {
-              // Navigate to the AddFriendsScreen when this button is tapped
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => FriendListScreen()),
@@ -2885,82 +2883,6 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
-            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
-        child: FractionallySizedBox(
-          widthFactor: 1.2, // Take up the full available width
-          child: Container(
-            color: Colors.grey[300],
-            height: ScreenHeight * .08,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Chat.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => ChatListPage(
-                                chats: [chats[0], chats[1]],
-                              )),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Network.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => HomePage()),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Home.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => education_Page()),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Read.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Map.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -3186,25 +3108,26 @@ class _FriendListScreenState extends State<FriendListScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _currentUser = FirebaseAuth.instance.currentUser!.uid;
 
-  Future<List<DocumentSnapshot>> fetchFriends() async {
-    List<DocumentSnapshot> friends = [];
+  Future<List<String>> fetchFriends() async {
+    List<String> friends = [];
+    // Query friends where the current user is user1
     QuerySnapshot querySnapshot = await _firestore
         .collection('friends')
         .where('user1', isEqualTo: _currentUser)
         .get();
 
     for (var doc in querySnapshot.docs) {
-      QuerySnapshot reverseCheck = await _firestore
-          .collection('friends')
-          .where('user1', isEqualTo: doc['user2'])
-          .where('user2', isEqualTo: _currentUser)
-          .get();
+      friends.add(doc['user2']);
+    }
 
-      if (reverseCheck.docs.isNotEmpty) {
-        DocumentSnapshot friendDoc =
-            await _firestore.collection('users').doc(doc['user2']).get();
-        friends.add(friendDoc);
-      }
+    // Query friends where the current user is user2
+    querySnapshot = await _firestore
+        .collection('friends')
+        .where('user2', isEqualTo: _currentUser)
+        .get();
+
+    for (var doc in querySnapshot.docs) {
+      friends.add(doc['user1']);
     }
 
     return friends;
@@ -3217,10 +3140,9 @@ class _FriendListScreenState extends State<FriendListScreen> {
         title: Text('Friends List'),
         backgroundColor: Colors.teal,
       ),
-      body: FutureBuilder<List<DocumentSnapshot>>(
+      body: FutureBuilder<List<String>>(
         future: fetchFriends(),
-        builder: (BuildContext context,
-            AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
@@ -3230,9 +3152,23 @@ class _FriendListScreenState extends State<FriendListScreen> {
           return ListView.builder(
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(snapshot.data![index][
-                    'username']), // replace 'username' with the field name in your users collection
+              return FutureBuilder<DocumentSnapshot>(
+                future: _firestore
+                    .collection('users')
+                    .doc(snapshot.data![index])
+                    .get(),
+                builder: (BuildContext context,
+                    AsyncSnapshot<DocumentSnapshot> userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (userSnapshot.hasError) {
+                    return Text('Error: ${userSnapshot.error}');
+                  }
+
+                  return ListTile(
+                    title: Text(userSnapshot.data!['username']),
+                  );
+                },
               );
             },
           );
@@ -3249,13 +3185,56 @@ class NewMessageScreen extends StatefulWidget {
 
 class _NewMessageScreenState extends State<NewMessageScreen> {
   final messageController = TextEditingController();
-  String dropdownValue = 'Friend 1'; // Initialize to first friend
+  String dropdownValue = 'Loading...';
+  List<String> friendsList = ['Loading...'];
 
   Future<void> sendMessage() async {
     if (messageController.text.length > 0) {
       // Implement your message sending logic here.
     }
     messageController.clear();
+  }
+
+  Future<void> loadFriends() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      final userFriendsQuery = await FirebaseFirestore.instance
+          .collection('friends')
+          .where('user1', isEqualTo: currentUser.uid)
+          .get();
+
+      final friendsUids =
+          userFriendsQuery.docs.map((doc) => doc['user2'] as String).toList();
+
+      List<String> newFriendsList = [];
+      for (final friendUid in friendsUids) {
+        final friendDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(friendUid)
+            .get();
+        final friendData = friendDoc.data();
+
+        if (friendData != null && friendData.containsKey('username')) {
+          newFriendsList.add(friendData['username']);
+        }
+      }
+
+      setState(() {
+        friendsList = newFriendsList;
+        if (friendsList.isNotEmpty) {
+          dropdownValue = friendsList[0];
+        } else {
+          dropdownValue = 'No friends available';
+        }
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadFriends();
   }
 
   @override
@@ -3294,8 +3273,8 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                     dropdownValue = newValue!;
                   });
                 },
-                items: <String>['Friend 1', 'Friend 2', 'Friend 3']
-                    .map<DropdownMenuItem<String>>((String value) {
+                items:
+                    friendsList.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -3313,82 +3292,6 @@ class _NewMessageScreenState extends State<NewMessageScreen> {
                 child: Text('Send Message'),
               ),
             ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
-            ScreenSize * .02, ScreenHeight * .02, ScreenSize * .02, 0),
-        child: FractionallySizedBox(
-          widthFactor: 1.2, // Take up the full available width
-          child: Container(
-            color: Colors.grey[300],
-            height: ScreenHeight * .08,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Chat.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => ChatListPage(
-                                chats: [], // Pass the chat list
-                              )),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Network.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => HomePage()),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Home.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => education_Page()),
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Read.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: ImageIcon(
-                    AssetImage('assets/images/Icon_Map.png'),
-                    color: null,
-                  ),
-                  iconSize: ScreenSize * .1,
-                ),
-              ],
-            ),
           ),
         ),
       ),
