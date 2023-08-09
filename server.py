@@ -42,9 +42,40 @@ import requests
 from datetime import datetime
 import pytz
 
+#for uploading user reports to firebase
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import storage
+import uuid
+
+# Initialize Firebase Admin SDK
+# Replace "path/to/serviceAccountKey.json" with the actual path to your service account JSON file.
+cred = credentials.Certificate("empowernus2-firebase-adminsdk-f8zrc-b276a25abe.json")
+firebase_admin.initialize_app(cred, {'storageBucket': 'empowernus2.appspot.com'})
+
 
 
 app = Flask(__name__)
+
+def generate_unique_filename(file_path):
+    _, file_extension = os.path.splitext(file_path)
+    unique_filename = str(uuid.uuid4()) + file_extension
+    return unique_filename
+
+# Function to upload PDF to Firebase Storage with a unique filename
+def upload_pdf_to_storage(file_path, destination_folder):
+    bucket = storage.bucket()
+    unique_filename = generate_unique_filename(file_path)
+    blob = bucket.blob(destination_folder + '/' + unique_filename)
+    blob.upload_from_filename(file_path)
+
+    # Make the uploaded PDF file publicly accessible (optional)
+    blob.make_public()
+
+    # Get the public URL of the uploaded PDF file
+    pdf_url = blob.public_url
+
+    return pdf_url
 
 
 # This list will store the data from POST requests
@@ -290,7 +321,7 @@ def run_detector(image_url):
 
     
 
-def generate_report():
+def generate_report(pdf_local_name):
     # Create a canvas and set the page size
     indian_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -307,7 +338,7 @@ def generate_report():
 
 
     
-    c = canvas.Canvas("report.pdf", pagesize=letter)
+    c = canvas.Canvas(pdf_local_name, pagesize=letter)
 
     # Set the font and font size
     c.setFont("Helvetica", 12)
@@ -401,13 +432,16 @@ def generate_report():
 
 
 reports = []
-
-
+report_index =0 
+my_photo_reports= []
 #Report generation endpoint for photos
 @app.route('/reportGen', methods=['GET', 'POST'])
 def reportGen():
     global reports
+    global report_index
+    global my_photo_reports
     if request.method == 'POST':
+        my_photo_reports = []#reset the my_photo_reports on another post request
         # Get the data from the POST request
         data = request.get_json()
         # Add the data to the list
@@ -416,12 +450,20 @@ def reportGen():
         global img_url
         img_url = reports[0]['Raw_Picture']
         run_detector(img_url)
+        report_index +=1
+        reports = []
+
 
         #work on report generation
-        generate_report()
+        pdf_local_path = f'photo_report{report_index}.pdf'
+        generate_report(pdf_local_path)
+        destination_folder = "user_photo_reports"
+        pdf_url = upload_pdf_to_storage(pdf_local_path, destination_folder)
+        my_photo_reports.append(pdf_url)
+
+        #upload that pdf onto firebase
 
 
-        reports = []
 
         return jsonify({'message': 'POST request received'}), 200
     else:
@@ -429,16 +471,20 @@ def reportGen():
         
         
 
-        return reports
+        return jsonify({'reports': reports, 'photo_reports': my_photo_reports}), 200
 
 videos = []
+index = 0
 theFiles = []
+
 #Report generation endpoint for videos
 @app.route('/reportGenVideos', methods=['GET', 'POST', 'DELETE'])
 def reportGenVideos():
-    index = 0
     global videos
+    global index
+    global theFiles
     if request.method == 'POST':
+        theFiles =[]
         data = request.get_json()
         videos.append(data)
 
@@ -450,8 +496,11 @@ def reportGenVideos():
         videos = []
 
         frames_folder = 'frames_output'
-        output_pdf_filename = 'output.pdf'
+        output_pdf_filename = f'output{index}.pdf'
         create_pdf_from_images(frames_folder, output_pdf_filename)
+        destination_folder = "user_reports"
+        pdf_url = upload_pdf_to_storage(output_pdf_filename, destination_folder)
+        theFiles.append(pdf_url)
 
         #upload that pdf onto firebase
         
@@ -459,9 +508,9 @@ def reportGenVideos():
         
         return jsonify({'message': 'POST request received'}), 200
     else:
-        
+        return jsonify({'videos': reports, 'video_reports': theFiles}), 200
+
            
-        return jsonify(videos), 200
     
 @app.route('/evidenceGeneration', methods = ['POST','GET'])
 def evidenceGeneration():
